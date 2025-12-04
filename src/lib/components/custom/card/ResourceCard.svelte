@@ -100,7 +100,7 @@
 		</Card.Title>
 	</Card.Header>
 
-	<Card.Content class="flex-grow">
+	<Card.Content class="grow">
 		<p class="text-sm text-slate-600 line-clamp-3 mb-4 leading-relaxed">
 			{resource.description || 'No description provided.'}
 		</p>

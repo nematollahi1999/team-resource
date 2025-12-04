@@ -33,7 +33,7 @@
 
 <!-- Fixed Container -->
 <div
-	class="fixed top-4 right-4 z-[100] flex flex-col gap-2 w-full max-w-[400px] pointer-events-none px-4 md:px-0"
+	class="fixed top-4 right-4 z-100 flex flex-col gap-2 w-full max-w-[400px] pointer-events-none px-4 md:px-0"
 >
 	{#each $toast as t (t.id)}
 		{@const style = getToastStyles(t.type)}

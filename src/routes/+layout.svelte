@@ -1,15 +1,24 @@
-<!-- src/routes/+layout.svelte -->
 <script lang="ts">
 	import './layout.css';
 	import { page } from '$app/stores';
 	import { Button } from '$lib/components/ui/button';
-	import { Book, Plus, Library } from 'lucide-svelte';
+	import * as Alert from '$lib/components/ui/alert';
+	import { fly } from 'svelte/transition';
+	
+	// Icons
+	import { 
+		Book, Plus, Library, X, 
+		CheckCircle2, AlertCircle, Info 
+	} from 'lucide-svelte';
+	
 	import Modal from '$lib/components/custom/add/Modal.svelte';
 	import AddResourceForm from '$lib/components/custom/add/AddResourceForm.svelte';
-	import Toaster from '$lib/components/custom/layout/Toaster.svelte';
+	
+	// Stores
 	import { modalStore } from '$lib/stores/modal';
+	import { toast } from '$lib/stores/toast';
 
-	// Svelte 5 Props: Destructure 'children' and 'data'
+	// Svelte 5 Props
 	let { children, data } = $props();
 
 	function openCreateModal() {
@@ -19,13 +28,66 @@
 	function closeModal() {
 		modalStore.close();
 	}
+	
+	// Helper to determine Alert styling based on toast type
+	function getAlertConfig(type: string) {
+		switch (type) {
+			case 'error':
+				return { variant: 'destructive' as const, icon: AlertCircle, title: 'Error' };
+			case 'success':
+				// Shadcn Alert default variant is white/gray. 
+				// We can force a green look via class if desired, or stick to standard.
+				// Here I stick to standard 'default' but with a green icon.
+				return { variant: 'default' as const, icon: CheckCircle2, title: 'Success' };
+			default:
+				return { variant: 'default' as const, icon: Info, title: 'Info' };
+		}
+	}
 </script>
 
-<Toaster />
+<!-- FLOATING ALERT CONTAINER (Replaces Toaster) -->
+<div
+	class="fixed top-4 right-4 z-100 flex flex-col gap-3 w-full max-w-[400px] px-4 md:px-0 pointer-events-none"
+>
+	{#each $toast as t (t.id)}
+		{@const config = getAlertConfig(t.type)}
+
+		<!-- Pointer events auto allows clicking the close button -->
+		<div transition:fly={{ x: 300, duration: 300 }} class="pointer-events-auto">
+			<Alert.Root
+				variant={config.variant}
+				class="bg-white dark:bg-slate-950 shadow-md relative pr-10"
+			>
+				<!-- Icon -->
+				<svelte:component
+					this={config.icon}
+					class="h-4 w-4 {t.type === 'success' ? 'text-green-600' : ''}"
+				/>
+
+				<Alert.Title class={t.type === 'success' ? 'text-green-700' : ''}>
+					{config.title}
+				</Alert.Title>
+
+				<Alert.Description>
+					{t.message}
+				</Alert.Description>
+
+				<!-- Close Button (Absolute positioned inside Alert) -->
+				<button
+					onclick={() => toast.remove(t.id)}
+					class="absolute top-4 right-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none"
+				>
+					<X class="h-4 w-4" />
+					<span class="sr-only">Close</span>
+				</button>
+			</Alert.Root>
+		</div>
+	{/each}
+</div>
 
 <div class="min-h-screen flex flex-col bg-slate-50 font-sans antialiased">
 	<header
-		class="sticky top-0 z-50 w-full border-b bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60"
+		class="sticky top-0 z-50 w-full border-b bg-white/95 backdrop-blur supports-backdrop-filter:bg-white/60"
 	>
 		<div class="container mx-auto flex h-14 items-center px-4 justify-between">
 			<a href="/" class="flex items-center gap-2 font-bold text-xl hover:opacity-80 transition">
