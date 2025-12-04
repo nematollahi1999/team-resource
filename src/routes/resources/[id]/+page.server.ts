@@ -11,7 +11,7 @@ import type { Resource } from '$lib/types';
 export const load: PageServerLoad = async (event) => {
     const { params } = event;
     // 1. Initialize an empty form so the global "Add Resource" modal in Layout still works
-    const form = await superValidate(zod(resourceSchema as any) );
+    const form = await superValidate(zod(resourceSchema) );
 
     let resource: Resource;
 

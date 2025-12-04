@@ -1,5 +1,5 @@
+<!-- src/routes/+error.svelte -->
 <script lang="ts">
-	//Errors come from HandleError inside hooks.server.ts 
 	import { page } from '$app/stores';
 	import { Button } from '$lib/components/ui/button';
 	import { AlertTriangle, Home, RotateCcw } from 'lucide-svelte';
@@ -15,21 +15,21 @@
 	</h1>
 
 	<p class="mt-4 text-lg text-slate-600 dark:text-slate-400 max-w-lg">
-		<!-- Display the specific error message -->
 		{$page.error?.message || 'Something went wrong.'}
 	</p>
 
 	<!-- In Dev Mode, show the stack trace for easier debugging -->
-	{#if $page.error?.stack}
+	<!-- We cast to 'any' here because App.Error doesn't officially have 'stack' by default -->
+	{#if ($page.error as any)?.stack}
 		<div
 			class="mt-6 w-full max-w-2xl overflow-hidden rounded-lg border border-red-200 bg-red-50 p-4 text-left text-xs font-mono text-red-800 dark:border-red-900 dark:bg-red-950/30 dark:text-red-200 shadow-inner"
 		>
-			<pre class="whitespace-pre-wrap break-words">{$page.error.stack}</pre>
+			<pre class="whitespace-pre-wrap wrap-break-words">{($page.error as any).stack}</pre>
 		</div>
 	{/if}
 
 	<div class="mt-8 flex gap-4">
-		<Button variant="outline" on:click={() => history.back()} class="gap-2 cursor-pointer">
+		<Button variant="outline" onclick={() => history.back()} class="gap-2 cursor-pointer">
 			<RotateCcw class="h-4 w-4" />
 			Go Back
 		</Button>
