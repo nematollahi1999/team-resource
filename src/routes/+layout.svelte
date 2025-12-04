@@ -3,6 +3,7 @@
 	import { page } from '$app/stores';
 	import { Button } from '$lib/components/ui/button';
 	import * as Alert from '$lib/components/ui/alert';
+	import * as Dialog from '$lib/components/ui/dialog'; // Shadcn Dialog
 	import { fly } from 'svelte/transition';
 	
 	// Icons
@@ -11,7 +12,6 @@
 		CheckCircle2, AlertCircle, Info 
 	} from 'lucide-svelte';
 	
-	import Modal from '$lib/components/custom/add/Modal.svelte';
 	import AddResourceForm from '$lib/components/custom/add/AddResourceForm.svelte';
 	
 	// Stores
@@ -29,50 +29,34 @@
 		modalStore.close();
 	}
 	
-	// Helper to determine Alert styling based on toast type
 	function getAlertConfig(type: string) {
 		switch (type) {
-			case 'error':
-				return { variant: 'destructive' as const, icon: AlertCircle, title: 'Error' };
-			case 'success':
-				// Shadcn Alert default variant is white/gray. 
-				// We can force a green look via class if desired, or stick to standard.
-				// Here I stick to standard 'default' but with a green icon.
-				return { variant: 'default' as const, icon: CheckCircle2, title: 'Success' };
-			default:
-				return { variant: 'default' as const, icon: Info, title: 'Info' };
+			case 'error': return { variant: 'destructive' as const, icon: AlertCircle, title: 'Error' };
+			case 'success': return { variant: 'default' as const, icon: CheckCircle2, title: 'Success' };
+			default: return { variant: 'default' as const, icon: Info, title: 'Info' };
 		}
 	}
 </script>
 
-<!-- FLOATING ALERT CONTAINER (Replaces Toaster) -->
+<!-- FLOATING ALERT CONTAINER -->
 <div
 	class="fixed top-4 right-4 z-100 flex flex-col gap-3 w-full max-w-[400px] px-4 md:px-0 pointer-events-none"
 >
 	{#each $toast as t (t.id)}
 		{@const config = getAlertConfig(t.type)}
-
-		<!-- Pointer events auto allows clicking the close button -->
 		<div transition:fly={{ x: 300, duration: 300 }} class="pointer-events-auto">
 			<Alert.Root
 				variant={config.variant}
 				class="bg-white dark:bg-slate-950 shadow-md relative pr-10"
 			>
-				<!-- Icon -->
 				<svelte:component
 					this={config.icon}
 					class="h-4 w-4 {t.type === 'success' ? 'text-green-600' : ''}"
 				/>
-
-				<Alert.Title class={t.type === 'success' ? 'text-green-700' : ''}>
-					{config.title}
-				</Alert.Title>
-
-				<Alert.Description>
-					{t.message}
-				</Alert.Description>
-
-				<!-- Close Button (Absolute positioned inside Alert) -->
+				<Alert.Title class={t.type === 'success' ? 'text-green-700' : ''}
+					>{config.title}</Alert.Title
+				>
+				<Alert.Description>{t.message}</Alert.Description>
 				<button
 					onclick={() => toast.remove(t.id)}
 					class="absolute top-4 right-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none"
@@ -115,7 +99,6 @@
 	</header>
 
 	<main class="flex-1 container mx-auto py-8 px-4">
-		<!-- Svelte 5 Snippet Rendering -->
 		{@render children()}
 	</main>
 
@@ -130,18 +113,31 @@
 		</div>
 	</footer>
 
-	<Modal
+	<!-- SHADCN DIALOG REPLACING CUSTOM MODAL -->
+	<!-- We control open state via store, and handle closing via onOpenChange -->
+	<Dialog.Root
 		open={$modalStore.isOpen}
-		onClose={closeModal}
-		title={$modalStore.mode === 'create' ? 'Add New Resource' : 'Edit Resource'}
+		onOpenChange={(open) => {
+			if (!open) closeModal();
+		}}
 	>
-		{#if $page.data.form}
-			<!-- Pass data.types from layout load -->
-			<AddResourceForm types={data.types} onSuccess={closeModal} data={$page.data.form} />
-		{:else}
-			<div class="p-4 text-center text-sm text-muted-foreground">
-				Form not available on this page.
+		<Dialog.Content class="sm:max-w-[500px]">
+			<Dialog.Header>
+				<Dialog.Title>
+					{$modalStore.mode === 'create' ? 'Add New Resource' : 'Edit Resource'}
+				</Dialog.Title>
+			</Dialog.Header>
+
+			<!-- FORM CONTENT -->
+			<div class="pt-2">
+				{#if $page.data.form}
+					<AddResourceForm types={data.types} onSuccess={closeModal} data={$page.data.form} />
+				{:else}
+					<div class="p-4 text-center text-sm text-muted-foreground">
+						Form not available on this page.
+					</div>
+				{/if}
 			</div>
-		{/if}
-	</Modal>
+		</Dialog.Content>
+	</Dialog.Root>
 </div>
