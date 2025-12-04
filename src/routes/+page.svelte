@@ -1,21 +1,19 @@
-<!-- src/routes/+page.svelte -->
 <script lang="ts">
 	import { page } from '$app/stores';
 	import { goto } from '$app/navigation';
 	import { Button } from '$lib/components/ui/button';
 	import { Input } from '$lib/components/ui/input';
+	import * as Pagination from '$lib/components/ui/pagination'; // Shadcn Pagination
 	import { Search } from 'lucide-svelte';
 	import ResourceCard from '$lib/components/custom/card/ResourceCard.svelte';
-	import Pagination from '$lib/components/custom/layout/Pagination.svelte';
 	
 	let { data } = $props();
 
 	// 1. Initialize State
-	// We use $state to hold the local input value
 	let searchTerm = $state($page.url.searchParams.get('search') || '');
 	let timer: ReturnType<typeof setTimeout>;
 
-	// 2. Debounce Logic with $effect
+	// 2. Debounce Logic
 	$effect(() => {
 		const currentUrlSearch = $page.url.searchParams.get('search') || '';
 		
@@ -50,7 +48,7 @@
 	}
 
 	function clearFilters() {
-		searchTerm = ''; // Triggers the effect
+		searchTerm = '';
 		const url = new URL($page.url);
 		url.searchParams.delete('search');
 		url.searchParams.delete('type');
@@ -115,11 +113,44 @@
 	</div>
 
 	<!-- PAGINATION -->
-	{#if data.resources}
-		<Pagination
-			currentPage={data.resources.page}
-			totalPages={data.resources.totalPages}
-			onPageChange={(newPage) => updateQuery('page', newPage.toString())}
-		/>
+	{#if data.resources && data.resources.totalPages > 1}
+		<div class="py-4">
+			<Pagination.Root
+				count={data.resources.totalItems}
+				perPage={data.resources.perPage}
+				page={data.resources.page}
+				onPageChange={(newPage) => updateQuery('page', newPage.toString())}
+			>
+				{#snippet children({ pages, currentPage })}
+					<Pagination.Content>
+						<Pagination.Item>
+							<Pagination.PrevButton class="cursor-pointer" />
+						</Pagination.Item>
+
+						{#each pages as page (page.key)}
+							{#if page.type === 'ellipsis'}
+								<Pagination.Item>
+									<Pagination.Ellipsis />
+								</Pagination.Item>
+							{:else}
+								<Pagination.Item>
+									<Pagination.Link
+										{page}
+										isActive={currentPage === page.value}
+										class="cursor-pointer"
+									>
+										{page.value}
+									</Pagination.Link>
+								</Pagination.Item>
+							{/if}
+						{/each}
+
+						<Pagination.Item>
+							<Pagination.NextButton class="cursor-pointer" />
+						</Pagination.Item>
+					</Pagination.Content>
+				{/snippet}
+			</Pagination.Root>
+		</div>
 	{/if}
 </div>
