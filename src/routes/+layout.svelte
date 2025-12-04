@@ -1,12 +1,12 @@
+<!-- src/routes/+layout.svelte -->
 <script lang="ts">
 	import './layout.css';
 	import { page } from '$app/stores';
 	import { Button } from '$lib/components/ui/button';
 	import * as Alert from '$lib/components/ui/alert';
-	import * as Dialog from '$lib/components/ui/dialog'; // Shadcn Dialog
+	import * as Dialog from '$lib/components/ui/dialog';
 	import { fly } from 'svelte/transition';
 	
-	// Icons
 	import { 
 		Book, Plus, Library, X, 
 		CheckCircle2, AlertCircle, Info 
@@ -14,11 +14,9 @@
 	
 	import AddResourceForm from '$lib/components/custom/add/AddResourceForm.svelte';
 	
-	// Stores
 	import { modalStore } from '$lib/stores/modal';
 	import { toast } from '$lib/stores/toast';
 
-	// Svelte 5 Props
 	let { children, data } = $props();
 
 	function openCreateModal() {
@@ -44,19 +42,23 @@
 >
 	{#each $toast as t (t.id)}
 		{@const config = getAlertConfig(t.type)}
+		<!-- Svelte 5 Fix: Assign component to a capitalized variable -->
+		{@const Icon = config.icon}
+
 		<div transition:fly={{ x: 300, duration: 300 }} class="pointer-events-auto">
 			<Alert.Root
 				variant={config.variant}
 				class="bg-white dark:bg-slate-950 shadow-md relative pr-10"
 			>
-				<svelte:component
-					this={config.icon}
-					class="h-4 w-4 {t.type === 'success' ? 'text-green-600' : ''}"
-				/>
-				<Alert.Title class={t.type === 'success' ? 'text-green-700' : ''}
-					>{config.title}</Alert.Title
-				>
+				<!-- Render Dynamic Component Directly -->
+				<Icon class="h-4 w-4 {t.type === 'success' ? 'text-green-600' : ''}" />
+
+				<Alert.Title class={t.type === 'success' ? 'text-green-700' : ''}>
+					{config.title}
+				</Alert.Title>
+
 				<Alert.Description>{t.message}</Alert.Description>
+
 				<button
 					onclick={() => toast.remove(t.id)}
 					class="absolute top-4 right-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none"
@@ -113,8 +115,6 @@
 		</div>
 	</footer>
 
-	<!-- SHADCN DIALOG REPLACING CUSTOM MODAL -->
-	<!-- We control open state via store, and handle closing via onOpenChange -->
 	<Dialog.Root
 		open={$modalStore.isOpen}
 		onOpenChange={(open) => {
@@ -128,7 +128,6 @@
 				</Dialog.Title>
 			</Dialog.Header>
 
-			<!-- FORM CONTENT -->
 			<div class="pt-2">
 				{#if $page.data.form}
 					<AddResourceForm types={data.types} onSuccess={closeModal} data={$page.data.form} />
