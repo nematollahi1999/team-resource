@@ -11,8 +11,9 @@ export const load: PageServerLoad = async ({ url }) => {
 	const page = Number(url.searchParams.get('page')) || 1;
 	const search = url.searchParams.get('search') || '';
 	const typeFilter = url.searchParams.get('type') || '';
+	// NEW: Get sort param, default to '-created'
+	const sort = url.searchParams.get('sort') || '-created';
 
-	// Initialize form with schema (which now has NO 'id')
 	const form = await superValidate(zod(resourceSchema));
 
 	let resources: PocketBaseList<Resource> = {
@@ -24,7 +25,8 @@ export const load: PageServerLoad = async ({ url }) => {
 	};
 
 	try {
-		const result = await api.getResources(page, search, typeFilter);
+		// NEW: Pass sort to API
+		const result = await api.getResources(page, search, typeFilter, sort);
 		resources = result as PocketBaseList<Resource>;
 	} catch (e) {
 		console.error('Error loading resources:', e);
@@ -42,8 +44,6 @@ export const actions: Actions = {
 		}
 
 		try {
-			// CLEANED: Just pass form.data directly. 
-			// Since 'id' is removed from schema, it won't be in form.data.
 			await api.createResource(form.data);
 		} catch (e) {
 			console.error(e);
@@ -53,13 +53,8 @@ export const actions: Actions = {
 	},
 
 	updateResource: async ({ request }) => {
-		// 1. Read formData manually to get the ID
 		const formData = await request.formData();
-		
-		// 2. Validate the rest of the fields against schema
 		const form = await superValidate(formData, zod(resourceSchema));
-		
-		// 3. Extract ID manually (it's in the formData, but ignored by superValidate schema)
 		const id = formData.get('id') as string;
 
 		if (!id) return fail(400, { form, error: 'Missing ID' });
@@ -69,7 +64,6 @@ export const actions: Actions = {
 		}
 
 		try {
-			// Pass ID separately, and form.data contains the rest
 			await api.updateResource(id, form.data);
 		} catch (e) {
 			console.error(e);

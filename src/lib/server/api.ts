@@ -1,3 +1,4 @@
+// src/lib/server/api.ts
 const PB_URL = 'http://127.0.0.1:8090'; 
 
 interface FetchOptions {
@@ -46,31 +47,26 @@ export const api = {
         return pbFetch(`/resources/records/${id}?expand=type`);
     },
     
-	getResources: async (page: number, search: string, typeFilter: string) => {
+    // UPDATED: Added 'sort' parameter with default value
+	getResources: async (page: number, search: string, typeFilter: string, sort: string = '-created') => {
 		const filters: string[] = [];
 		
 		if (search) {
-            // FIX: Escape single quotes to prevent crashing
             const s = search.replace(/'/g, "\\'");
-            
-            // FIX: Syntax strictly matches: (title~'val' || tags~'val')
-            // Added 'tags' to the search fields
 			filters.push(`(title~'${s}' || description~'${s}' || tags~'${s}')`);
 		}
 		
 		if (typeFilter && typeFilter !== 'all') {
-            // FIX: Syntax strictly matches: type.resource_type='val'
 			filters.push(`type.resource_type='${typeFilter}'`);
 		}
 
 		const query = new URLSearchParams();
 		query.append('page', page.toString());
 		query.append('perPage', '30'); 
-		query.append('sort', '-created');
+		query.append('sort', sort); 
 		query.append('expand', 'type');
 
 		if (filters.length > 0) {
-            // PocketBase expects string filters
 			query.append('filter', filters.join(' && '));
 		}
 		

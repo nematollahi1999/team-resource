@@ -11,11 +11,20 @@
 	
 	let { data } = $props();
 
-	// 1. Initialize State
+	// --- CONSTANTS ---
+	const sortOptions = [
+		{ value: '-created', label: 'Newest' },
+		{ value: '+created', label: 'Oldest' },
+		{ value: '+title', label: 'Title (A-Z)' },
+		{ value: '-title', label: 'Title (Z-A)' },
+		{ value: '-updated', label: 'Recently Updated' }
+	];
+
+	// --- STATE ---
 	let searchTerm = $state($page.url.searchParams.get('search') || '');
 	let timer: ReturnType<typeof setTimeout>;
 
-	// 2. Debounce Logic
+	// 1. Debounce Logic
 	$effect(() => {
 		const currentUrlSearch = $page.url.searchParams.get('search') || '';
 		
@@ -27,22 +36,34 @@
 		}
 	});
 
-	// 3. Derived State for Select Value & Label
+	// 2. Type Select Logic
 	let currentTypeParam = $derived($page.url.searchParams.get('type') || 'all');
 	
-	// We derive the "Label" manually for the trigger button text
-	let triggerLabel = $derived.by(() => {
+	let typeTriggerLabel = $derived.by(() => {
 		if (currentTypeParam === 'all') return 'All Types';
 		const found = data.types?.find((t) => t.resource_type === currentTypeParam);
 		return found ? found.resource_type : 'All Types';
 	});
 
+	// 3. Sort Select Logic
+	let currentSortParam = $derived($page.url.searchParams.get('sort') || '-created');
+
+	let sortTriggerLabel = $derived.by(() => {
+		const found = sortOptions.find(o => o.value === currentSortParam);
+		return found ? found.label : 'Newest';
+	});
+
+	// --- HELPERS ---
 	function updateQuery(key: string, val: string) {
 		const url = new URL($page.url);
-		if (val) url.searchParams.set(key, val);
+
+		if (val && val !== 'all') url.searchParams.set(key, val);
 		else url.searchParams.delete(key);
 
-		if (key !== 'page') url.searchParams.set('page', '1');
+		// Always reset to page 1 when changing filters/sort, unless we are pagination
+		if (key !== 'page') {
+			url.searchParams.set('page', '1');
+		}
 
 		goto(url, { keepFocus: true, noScroll: true, replaceState: true });
 	}
@@ -52,6 +73,7 @@
 		const url = new URL($page.url);
 		url.searchParams.delete('search');
 		url.searchParams.delete('type');
+		url.searchParams.delete('sort');
 		url.searchParams.set('page', '1');
 		goto(url);
 	}
@@ -60,38 +82,55 @@
 <div class="space-y-6">
 	<!-- Filter Bar -->
 	<div class="flex flex-col gap-4 rounded-lg border bg-white p-4 shadow-sm md:flex-row">
+		<!-- Search -->
 		<div class="relative w-full md:flex-1">
 			<Search class="text-muted-foreground absolute left-2.5 top-2.5 h-4 w-4" />
 			<Input placeholder="Search titles, tags..." class="pl-8" bind:value={searchTerm} />
 		</div>
 
-		<div class="w-full md:w-[200px]">
-			<!-- FIXED SHADCN SELECT -->
-			<Select.Root
-				type="single"
-				value={currentTypeParam}
-				onValueChange={(v: string) => {
-					// v is strictly a string here
-					if (v) {
-						updateQuery('type', v === 'all' ? '' : v);
-					}
-				}}
-			>
-				<Select.Trigger class="w-full capitalize bg-white">
-					<!-- Render text directly to avoid component issues -->
-					{triggerLabel}
-				</Select.Trigger>
-				<Select.Content>
-					<Select.Item value="all" label="All Types">All Types</Select.Item>
-					{#if data.types}
-						{#each data.types as t}
-							<Select.Item value={t.resource_type} label={t.resource_type} class="capitalize">
-								{t.resource_type}
+		<div class="flex flex-col gap-2 md:flex-row w-full md:w-auto">
+			<!-- SORT SELECT -->
+			<div class="w-full md:w-[180px]">
+				<Select.Root
+					type="single"
+					value={currentSortParam}
+					onValueChange={(v: string) => updateQuery('sort', v)}
+				>
+					<Select.Trigger class="w-full bg-white">
+						{sortTriggerLabel}
+					</Select.Trigger>
+					<Select.Content>
+						{#each sortOptions as option}
+							<Select.Item value={option.value} label={option.label}>
+								{option.label}
 							</Select.Item>
 						{/each}
-					{/if}
-				</Select.Content>
-			</Select.Root>
+					</Select.Content>
+				</Select.Root>
+			</div>
+
+			<!-- TYPE SELECT -->
+			<div class="w-full md:w-[180px]">
+				<Select.Root
+					type="single"
+					value={currentTypeParam}
+					onValueChange={(v: string) => updateQuery('type', v === 'all' ? '' : v)}
+				>
+					<Select.Trigger class="w-full capitalize bg-white">
+						{typeTriggerLabel}
+					</Select.Trigger>
+					<Select.Content>
+						<Select.Item value="all" label="All Types">All Types</Select.Item>
+						{#if data.types}
+							{#each data.types as t}
+								<Select.Item value={t.resource_type} label={t.resource_type} class="capitalize">
+									{t.resource_type}
+								</Select.Item>
+							{/each}
+						{/if}
+					</Select.Content>
+				</Select.Root>
+			</div>
 		</div>
 	</div>
 
