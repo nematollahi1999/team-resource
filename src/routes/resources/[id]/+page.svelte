@@ -1,8 +1,11 @@
+<!-- src/routes/resources/[id]/+page.svelte -->
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import { Button } from '$lib/components/ui/button';
+	import { goto } from '$app/navigation';
 	import * as Breadcrumb from '$lib/components/ui/breadcrumb';
-	
+	import * as AlertDialog from '$lib/components/ui/alert-dialog'; // Import Alert Dialog
+
 	// Icons
 	import {
 		ExternalLink, Calendar, Clock, Pencil, Trash2,
@@ -16,6 +19,9 @@
 
 	let { data } = $props();
 	let resource = $derived(data.resource);
+	
+	// Local state for the delete dialog
+	let deleteDialogOpen = $state(false);
 
 	// --- Helpers ---
 	function formatDate(dateStr: string) {
@@ -112,32 +118,15 @@
 						Edit
 					</Button>
 
-					<form
-						action="?/delete"
-						method="POST"
-						use:enhance={({ cancel }) => {
-							if (
-								!confirm('Are you sure you want to delete this resource? This cannot be undone.')
-							) {
-								cancel();
-							}
-							return async ({ result }) => {
-								if (result.type === 'error' || result.type === 'failure') {
-									toast.error('Failed to delete resource');
-								}
-								// Success automatically redirects via server
-							};
-						}}
+					<!-- TRIGGER BUTTON -->
+					<Button
+						variant="destructive"
+						class="cursor-pointer gap-2 border border-red-100 bg-red-50 text-red-600 shadow-none hover:bg-red-100 hover:text-red-700"
+						onclick={() => (deleteDialogOpen = true)}
 					>
-						<Button
-							type="submit"
-							variant="destructive"
-							class="cursor-pointer gap-2 border border-red-100 bg-red-50 text-red-600 shadow-none hover:bg-red-100 hover:text-red-700"
-						>
-							<Trash2 class="h-4 w-4" />
-							Delete
-						</Button>
-					</form>
+						<Trash2 class="h-4 w-4" />
+						Delete
+					</Button>
 				</div>
 			</div>
 
@@ -208,3 +197,46 @@
 		</div>
 	</div>
 </div>
+
+<!-- ALERT DIALOG COMPONENT -->
+<AlertDialog.Root bind:open={deleteDialogOpen}>
+	<AlertDialog.Content>
+		<AlertDialog.Header>
+			<AlertDialog.Title>Delete this resource?</AlertDialog.Title>
+			<AlertDialog.Description>
+				This action cannot be undone. This will permanently delete
+				<span class="font-bold text-slate-900">{resource.title}</span>
+				and redirect you to the home page.
+			</AlertDialog.Description>
+		</AlertDialog.Header>
+
+		<AlertDialog.Footer>
+			<AlertDialog.Cancel class="cursor-pointer">Cancel</AlertDialog.Cancel>
+
+			<form
+				action="?/delete"
+				method="POST"
+				use:enhance={({ cancel }) => {
+					return async ({ result }) => {
+						if (result.type === 'redirect') {
+							// 1. Success! Redirect
+							toast.success('Resource deleted successfully.');
+							goto(result.location);
+						} else if (result.type === 'failure' || result.type === 'error') {
+							// 2. Failure
+							deleteDialogOpen = false;
+							toast.error('Failed to delete resource');
+						}
+					};
+				}}
+			>
+				<AlertDialog.Action
+					type="submit"
+					class="bg-red-600 hover:bg-red-700 text-white cursor-pointer"
+				>
+					Delete
+				</AlertDialog.Action>
+			</form>
+		</AlertDialog.Footer>
+	</AlertDialog.Content>
+</AlertDialog.Root>
