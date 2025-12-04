@@ -7,6 +7,7 @@ import { resourceSchema } from '$lib/schemas';
 import type { PageServerLoad, Actions } from './$types';
 import type { Resource } from '$lib/types';
 
+
 export const load: PageServerLoad = async (event) => {
     const { params } = event;
     // 1. Initialize an empty form so the global "Add Resource" modal in Layout still works

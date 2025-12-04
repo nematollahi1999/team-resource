@@ -7,13 +7,11 @@
 	import Modal from '$lib/components/custom/add/Modal.svelte';
 	import AddResourceForm from '$lib/components/custom/add/AddResourceForm.svelte';
 	import Toaster from '$lib/components/custom/layout/Toaster.svelte';
-	// NEW: Import Store
 	import { modalStore } from '$lib/stores/modal';
-	import type { LayoutData } from './$types';
 
-	export let data: LayoutData;
+	// Svelte 5 Props: Destructure 'children' and 'data'
+	let { children, data } = $props();
 
-	// Use store functions
 	function openCreateModal() {
 		modalStore.openCreate();
 	}
@@ -43,7 +41,7 @@
 				</Button>
 
 				<Button
-					on:click={openCreateModal}
+					onclick={openCreateModal}
 					size="sm"
 					class="gap-2 bg-blue-600 text-white hover:bg-blue-700 cursor-pointer"
 				>
@@ -55,7 +53,8 @@
 	</header>
 
 	<main class="flex-1 container mx-auto py-8 px-4">
-		<slot />
+		<!-- Svelte 5 Snippet Rendering -->
+		{@render children()}
 	</main>
 
 	<footer class="border-t bg-white py-6 md:py-0">
@@ -69,13 +68,13 @@
 		</div>
 	</footer>
 
-	<!-- Use $modalStore.isOpen instead of local state -->
 	<Modal
 		open={$modalStore.isOpen}
 		onClose={closeModal}
 		title={$modalStore.mode === 'create' ? 'Add New Resource' : 'Edit Resource'}
 	>
 		{#if $page.data.form}
+			<!-- Pass data.types from layout load -->
 			<AddResourceForm types={data.types} onSuccess={closeModal} data={$page.data.form} />
 		{:else}
 			<div class="p-4 text-center text-sm text-muted-foreground">

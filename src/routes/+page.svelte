@@ -1,3 +1,4 @@
+<!-- src/routes/+page.svelte -->
 <script lang="ts">
 	import { page } from '$app/stores';
 	import { goto } from '$app/navigation';
@@ -6,29 +7,28 @@
 	import { Search } from 'lucide-svelte';
 	import ResourceCard from '$lib/components/custom/card/ResourceCard.svelte';
 	import Pagination from '$lib/components/custom/layout/Pagination.svelte';
-	import type { PageData } from './$types';
+	
+	let { data } = $props();
 
-	export let data: PageData;
+	// 1. Initialize State
+	// We use $state to hold the local input value
+	let searchTerm = $state($page.url.searchParams.get('search') || '');
+	let timer: ReturnType<typeof setTimeout>;
 
-	// 1. Initialize from URL
-	let searchTerm = $page.url.searchParams.get('search') || '';
-	let timer: any;
-
-	// 2. THE FIX: Reactive Statement
-	// Whenever 'searchTerm' changes, this block runs automatically.
-	$: {
-		// Only run if the value is different from what's already in the URL
-		// This prevents infinite loops
-		if (searchTerm !== ($page.url.searchParams.get('search') || '')) {
+	// 2. Debounce Logic with $effect
+	$effect(() => {
+		const currentUrlSearch = $page.url.searchParams.get('search') || '';
+		
+		if (searchTerm !== currentUrlSearch) {
 			clearTimeout(timer);
 			timer = setTimeout(() => {
 				updateQuery('search', searchTerm);
 			}, 300);
 		}
-	}
+	});
 
 	function handleTypeChange(e: Event) {
-		const val = (e.currentTarget as HTMLSelectElement).value;
+		const val = (e.target as HTMLSelectElement).value;
 		updateQuery('type', val === 'all' ? '' : val);
 	}
 
@@ -50,7 +50,7 @@
 	}
 
 	function clearFilters() {
-		searchTerm = '';
+		searchTerm = ''; // Triggers the effect
 		const url = new URL($page.url);
 		url.searchParams.delete('search');
 		url.searchParams.delete('type');
@@ -64,8 +64,6 @@
 	<div class="flex flex-col gap-4 rounded-lg border bg-white p-4 shadow-sm md:flex-row">
 		<div class="relative w-full md:flex-1">
 			<Search class="text-muted-foreground absolute left-2.5 top-2.5 h-4 w-4" />
-
-			<!-- FIX: Just use bind:value. The $: block above handles the logic. -->
 			<Input placeholder="Search titles, tags..." class="pl-8" bind:value={searchTerm} />
 		</div>
 
@@ -73,7 +71,7 @@
 			<select
 				class="border-input ring-offset-background placeholder:text-muted-foreground focus:ring-ring flex h-10 w-full items-center justify-between rounded-md border bg-background px-3 py-2 text-sm capitalize focus:outline-none focus:ring-1 focus:ring-offset-0 disabled:cursor-not-allowed disabled:opacity-50"
 				value={$page.url.searchParams.get('type') || 'all'}
-				on:change={handleTypeChange}
+				onchange={handleTypeChange}
 			>
 				<option value="all">All Types</option>
 				{#if data.types}
@@ -99,7 +97,7 @@
 
 	<!-- Resource Grid -->
 	<div class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-		{#if data.resources && data.resources.items && data.resources.items.length > 0}
+		{#if data.resources && data.resources.items?.length > 0}
 			{#each data.resources.items as item (item.id)}
 				<ResourceCard resource={item} />
 			{/each}
@@ -109,7 +107,7 @@
 			>
 				<p class="text-lg font-medium text-slate-600">No resources found</p>
 				<p class="mt-1 text-sm text-slate-500">Try adjusting your search or filters</p>
-				<Button variant="link" on:click={clearFilters} class="mt-2 text-blue-600">
+				<Button variant="link" onclick={clearFilters} class="mt-2 text-blue-600 cursor-pointer">
 					Clear Filters
 				</Button>
 			</div>

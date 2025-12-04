@@ -1,35 +1,25 @@
+<!-- src/lib/components/custom/add/AddResourceForm.svelte -->
 <script lang="ts">
 	import { Input } from '$lib/components/ui/input';
 	import { Button } from '$lib/components/ui/button';
 	import { Label } from '$lib/components/ui/label';
-
-	import type { ActionResult } from '@sveltejs/kit';
 	import { superForm } from 'sveltekit-superforms';
 	import { zodClient } from 'sveltekit-superforms/adapters';
-	import type { SuperValidated, Infer } from 'sveltekit-superforms';
-
 	import { resourceSchema } from '$lib/schemas';
-	import type { ResourceData } from '$lib/schemas';
-	import type { ResourceType } from '$lib/types';
-
 	import { toast } from '$lib/stores/toast';
 	import { modalStore } from '$lib/stores/modal';
 
-	export let types: ResourceType[] = [];
-	export let onSuccess: () => void;
-	export let data: SuperValidated<ResourceData>;
+	let { types = [], onSuccess, data } = $props();
 
 	// Initialize Superform
 	const { form, errors, constraints, enhance, delayed, reset } = superForm(data, {
-		// --- THIS ENABLES CLIENT-SIDE VALIDATION ---
 		validators: zodClient(resourceSchema),
-
-		resetForm: false,
-		onResult: ({ result }: { result: ActionResult }) => {
+		resetForm: false, // We handle reset manually
+		onResult: ({ result }) => {
 			if (result.type === 'success') {
 				const action = $modalStore.mode === 'create' ? 'added' : 'updated';
 				toast.success(`Resource ${action} successfully!`);
-				onSuccess();
+				onSuccess(); // Close modal
 				if ($modalStore.mode === 'create') reset();
 			} else if (result.type === 'failure' || result.type === 'error') {
 				toast.error('Operation failed. Please check inputs.');
@@ -37,26 +27,26 @@
 		}
 	});
 
-	// ... (Rest of your component logic remains exactly the same)
-	$: if ($modalStore.mode === 'edit' && $modalStore.resource) {
-		const r = $modalStore.resource;
-		$form.title = r.title;
-		$form.url = r.url;
-		$form.description = r.description;
-		$form.type = r.type;
-		$form.tags = r.tags;
-	} else if ($modalStore.mode === 'create' && !$modalStore.isOpen) {
-		// reset();
-	}
+	// React to Modal Opening for EDIT mode
+	$effect(() => {
+		if ($modalStore.mode === 'edit' && $modalStore.resource && $modalStore.isOpen) {
+			const r = $modalStore.resource;
+			$form.title = r.title;
+			$form.url = r.url;
+			$form.description = r.description;
+			$form.type = r.expand?.type?.id || r.type; // Handle ID or expanded object
+			$form.tags = r.tags;
+			// We handle ID via hidden input
+		} else if ($modalStore.mode === 'create' && !$modalStore.isOpen) {
+			// Optional: reset() here if you want to clear form on close
+		}
+	});
 
-	$: charCount = $form.description ? $form.description.length : 0;
-	$: formAction = $modalStore.mode === 'create' ? '/?/createResource' : '/?/updateResource';
+	let charCount = $derived($form.description ? $form.description.length : 0);
+	let formAction = $derived($modalStore.mode === 'create' ? '/?/createResource' : '/?/updateResource');
 </script>
 
-<!-- The HTML template remains exactly the same -->
 <form method="POST" action={formAction} use:enhance class="space-y-5" novalidate>
-	<!-- ... inputs ... -->
-	<!-- (Your existing HTML code here) -->
 	{#if $modalStore.mode === 'edit' && $modalStore.resource}
 		<input type="hidden" name="id" value={$modalStore.resource.id} />
 	{/if}
@@ -101,8 +91,7 @@
 			{...$constraints.description}
 		></textarea>
 		<div class="flex justify-between items-center">
-			{#if $errors.description}<span class="text-red-500 text-xs">{$errors.description}</span
-				>{:else}<span></span>{/if}
+			<span class="text-red-500 text-xs h-4 block">{$errors.description || ''}</span>
 			<span class="text-xs text-muted-foreground">{charCount} characters</span>
 		</div>
 	</div>
@@ -140,9 +129,9 @@
 
 	<!-- Footer Actions -->
 	<div class="flex justify-end gap-3 pt-4 border-t mt-2">
-		<Button type="button" variant="outline" class="cursor-pointer" on:click={onSuccess}
-			>Cancel</Button
-		>
+		<Button type="button" variant="outline" class="cursor-pointer" onclick={onSuccess}>
+			Cancel
+		</Button>
 		<Button
 			type="submit"
 			disabled={$delayed}
