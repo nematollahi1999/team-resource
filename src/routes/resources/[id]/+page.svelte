@@ -1,34 +1,22 @@
 <!-- src/routes/resources/[id]/+page.svelte -->
 <script lang="ts">
 	import { enhance } from '$app/forms';
-	import { page } from '$app/stores';
 	import { Button } from '$lib/components/ui/button';
-	import { Badge } from '$lib/components/ui/badge';
-
+	import * as Breadcrumb from '$lib/components/ui/breadcrumb';
+	
 	// Icons
 	import {
-		ChevronRight,
-		ExternalLink,
-		Calendar,
-		Clock,
-		Pencil,
-		Trash2,
-		FileText,
-		PlayCircle,
-		Wrench,
-		GraduationCap,
-		Book,
-		HelpCircle
+		ExternalLink, Calendar, Clock, Pencil, Trash2,
+		FileText, PlayCircle, Wrench, GraduationCap, 
+		Book, HelpCircle
 	} from 'lucide-svelte';
 
 	// Stores
 	import { modalStore } from '$lib/stores/modal';
 	import { toast } from '$lib/stores/toast';
 
-	import type { PageData } from './$types';
-
-	export let data: PageData;
-	$: resource = data.resource;
+	let { data } = $props();
+	let resource = $derived(data.resource);
 
 	// --- Helpers ---
 	function formatDate(dateStr: string) {
@@ -42,52 +30,44 @@
 	function getTypeIcon(typeStr: string | undefined) {
 		const t = typeStr?.toLowerCase() || '';
 		switch (t) {
-			case 'article':
-				return FileText;
-			case 'video':
-				return PlayCircle;
-			case 'tool':
-				return Wrench;
-			case 'tutorial':
-				return GraduationCap;
-			case 'docs':
-				return Book;
-			default:
-				return HelpCircle;
+			case 'article': return FileText;
+			case 'video': return PlayCircle;
+			case 'tool': return Wrench;
+			case 'tutorial': return GraduationCap;
+			case 'docs': return Book;
+			default: return HelpCircle;
 		}
 	}
 
-	// NEW: Function to get colors based on type
 	function getTypeColor(typeStr: string | undefined) {
 		const t = typeStr?.toLowerCase() || '';
 		switch (t) {
-			case 'docs':
-				return 'bg-yellow-50 text-yellow-700 border-yellow-200';
-			case 'tool':
-				return 'bg-green-50 text-green-700 border-green-200';
-			case 'tutorial':
-				return 'bg-purple-50 text-purple-700 border-purple-200';
-			case 'article':
-				return 'bg-blue-50 text-blue-700 border-blue-200';
-			case 'video':
-				return 'bg-red-50 text-red-700 border-red-200';
-			case 'other':
-			default:
-				return 'bg-slate-100 text-slate-700 border-slate-200'; // Gray
+			case 'docs': return 'bg-yellow-50 text-yellow-700 border-yellow-200';
+			case 'tool': return 'bg-green-50 text-green-700 border-green-200';
+			case 'tutorial': return 'bg-purple-50 text-purple-700 border-purple-200';
+			case 'article': return 'bg-blue-50 text-blue-700 border-blue-200';
+			case 'video': return 'bg-red-50 text-red-700 border-red-200';
+			default: return 'bg-slate-100 text-slate-700 border-slate-200';
 		}
 	}
 
-	$: TypeIcon = getTypeIcon(resource.expand?.type?.resource_type);
-	$: typeColor = getTypeColor(resource.expand?.type?.resource_type);
+	let TypeIcon = $derived(getTypeIcon(resource.expand?.type?.resource_type));
+	let typeColor = $derived(getTypeColor(resource.expand?.type?.resource_type));
 </script>
 
 <div class="max-w-4xl mx-auto space-y-6">
-	<!-- Breadcrumbs -->
-	<nav class="flex items-center text-sm text-muted-foreground">
-		<a href="/" class="hover:text-blue-600 transition-colors">All Resources</a>
-		<ChevronRight class="h-4 w-4 mx-2" />
-		<span class="font-medium text-slate-900 truncate max-w-[300px]">{resource.title}</span>
-	</nav>
+	<!-- Shadcn Breadcrumb -->
+	<Breadcrumb.Root>
+		<Breadcrumb.List>
+			<Breadcrumb.Item>
+				<Breadcrumb.Link href="/">All Resources</Breadcrumb.Link>
+			</Breadcrumb.Item>
+			<Breadcrumb.Separator />
+			<Breadcrumb.Item>
+				<Breadcrumb.Page>{resource.title}</Breadcrumb.Page>
+			</Breadcrumb.Item>
+		</Breadcrumb.List>
+	</Breadcrumb.Root>
 
 	<!-- Main Card -->
 	<div class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
@@ -127,7 +107,7 @@
 					<Button
 						variant="outline"
 						class="cursor-pointer gap-2"
-						on:click={() => modalStore.openEdit(resource)}
+						onclick={() => modalStore.openEdit(resource)}
 					>
 						<Pencil class="h-4 w-4" />
 						Edit
@@ -171,7 +151,7 @@
 					href={resource.url}
 					target="_blank"
 					rel="noopener noreferrer"
-					class="inline-flex flex items-center gap-1 break-all font-medium text-blue-600 hover:text-blue-800"
+					class="inline-flex items-center gap-1 break-all font-medium text-blue-600 hover:text-blue-800"
 				>
 					{resource.url}
 					<ExternalLink class="h-3.5 w-3.5" />
