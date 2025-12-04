@@ -4,9 +4,9 @@
 	import { page } from '$app/stores';
 	import { Button } from '$lib/components/ui/button';
 	import { Book, Plus, Library } from 'lucide-svelte';
-	import Modal from '$lib/components/ui/Modal.svelte';
-	import AddResourceForm from '$lib/components/ui/AddResourceForm.svelte';
-	import Toaster from '$lib/components/ui/Toaster.svelte';
+	import Modal from '$lib/components/custom/add/Modal.svelte';
+	import AddResourceForm from '$lib/components/custom/add/AddResourceForm.svelte';
+	import Toaster from '$lib/components/custom/layout/Toaster.svelte';
 	// NEW: Import Store
 	import { modalStore } from '$lib/stores/modal';
 	import type { LayoutData } from './$types';
