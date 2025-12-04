@@ -1,18 +1,26 @@
 <!-- src/lib/components/custom/card/ResourceCard.svelte -->
 <script lang="ts">
 	import * as Card from '$lib/components/ui/card';
+	import * as AlertDialog from '$lib/components/ui/alert-dialog'; // Import Alert Dialog
 	import { Badge } from '$lib/components/ui/badge';
 	import { Button } from '$lib/components/ui/button';
 	import { enhance } from '$app/forms';
 	import { modalStore } from '$lib/stores/modal';
-	import type { Resource } from '$lib/types';
 	import { toast } from '$lib/stores/toast';
+	
+	import type { Resource } from '$lib/types';
+	
+	// Icons
 	import { 
 		FileText, PlayCircle, Wrench, GraduationCap, 
 		Book, HelpCircle, Pencil, Trash2 
 	} from 'lucide-svelte';
 
+	// Svelte 5 Props
 	let { resource } = $props<{ resource: Resource }>();
+
+	// Local State for the Delete Dialog
+	let deleteDialogOpen = $state(false);
 
 	function getTypeConfig(typeStr: string | undefined) {
 		const t = typeStr?.toLowerCase() || '';
@@ -65,30 +73,15 @@
 					<Pencil class="w-4 h-4" />
 				</Button>
 
-				<form
-					action="/?/delete"
-					method="POST"
-					class="inline"
-					use:enhance={({ cancel }) => {
-						const confirmed = confirm('Are you sure you want to delete this resource?');
-						if (!confirmed) return cancel();
-						return async ({ result, update }) => {
-							await update();
-							if (result.type === 'success') toast.success('Resource deleted successfully.');
-							else toast.error('Failed to delete resource.');
-						};
-					}}
+				<!-- TRIGGER BUTTON (Just opens the state) -->
+				<Button
+					variant="ghost"
+					size="icon"
+					class="h-8 w-8 text-slate-400 hover:text-red-600 cursor-pointer"
+					onclick={() => (deleteDialogOpen = true)}
 				>
-					<input type="hidden" name="id" value={resource.id} />
-					<Button
-						type="submit"
-						variant="ghost"
-						size="icon"
-						class="h-8 w-8 text-slate-400 hover:text-red-600 cursor-pointer"
-					>
-						<Trash2 class="w-4 h-4" />
-					</Button>
-				</form>
+					<Trash2 class="w-4 h-4" />
+				</Button>
 			</div>
 		</div>
 
@@ -100,11 +93,10 @@
 		</Card.Title>
 	</Card.Header>
 
-	<Card.Content class="grow">
+	<Card.Content class="flex-grow">
 		<p class="text-sm text-slate-600 line-clamp-3 mb-4 leading-relaxed">
 			{resource.description || 'No description provided.'}
 		</p>
-
 		{#if resource.tags}
 			<div class="flex flex-wrap gap-2 mt-auto pt-2">
 				{#each resource.tags.split(',') as tag}
@@ -130,3 +122,47 @@
 		</Button>
 	</Card.Footer>
 </Card.Root>
+
+<!-- ALERT DIALOG COMPONENT -->
+<AlertDialog.Root bind:open={deleteDialogOpen}>
+	<AlertDialog.Content>
+		<AlertDialog.Header>
+			<AlertDialog.Title>Are you absolutely sure?</AlertDialog.Title>
+			<AlertDialog.Description>
+				This action cannot be undone. This will permanently delete
+				<span class="font-bold text-slate-900">{resource.title}</span>
+				from the library.
+			</AlertDialog.Description>
+		</AlertDialog.Header>
+
+		<AlertDialog.Footer>
+			<AlertDialog.Cancel class="cursor-pointer">Cancel</AlertDialog.Cancel>
+
+			<!-- THE FORM IS NOW HERE -->
+			<form
+				action="/?/delete"
+				method="POST"
+				use:enhance={() => {
+					return async ({ result, update }) => {
+						// Close dialog immediately on submit start or keep open?
+						// Usually better to wait for result, but for optimistic UI:
+						deleteDialogOpen = false;
+
+						await update();
+						if (result.type === 'success') toast.success('Resource deleted successfully.');
+						else toast.error('Failed to delete resource.');
+					};
+				}}
+			>
+				<input type="hidden" name="id" value={resource.id} />
+				<!-- The Continue Button submits the form -->
+				<AlertDialog.Action
+					type="submit"
+					class="bg-red-600 hover:bg-red-700 text-white cursor-pointer"
+				>
+					Continue
+				</AlertDialog.Action>
+			</form>
+		</AlertDialog.Footer>
+	</AlertDialog.Content>
+</AlertDialog.Root>
