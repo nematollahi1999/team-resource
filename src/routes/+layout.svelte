@@ -7,9 +7,10 @@
 	import * as Dialog from '$lib/components/ui/dialog';
 	import { fly } from 'svelte/transition';
 	
+	// Icons
 	import { 
 		Book, Plus, Library, X, 
-		CheckCircle2, AlertCircle, Info 
+		CheckCircle2, AlertCircle, Info, LogOut, LogIn
 	} from 'lucide-svelte';
 	
 	import AddResourceForm from '$lib/components/custom/add/AddResourceForm.svelte';
@@ -42,7 +43,7 @@
 >
 	{#each $toast as t (t.id)}
 		{@const config = getAlertConfig(t.type)}
-		<!-- Svelte 5 Fix: Assign component to a capitalized variable -->
+		<!-- FIX: Assign component to a capitalized variable for Svelte 5 -->
 		{@const Icon = config.icon}
 
 		<div transition:fly={{ x: 300, duration: 300 }} class="pointer-events-auto">
@@ -88,14 +89,29 @@
 					<span class="hidden sm:block">All Resources</span>
 				</Button>
 
-				<Button
-					onclick={openCreateModal}
-					size="sm"
-					class="gap-2 bg-blue-600 text-white hover:bg-blue-700 cursor-pointer"
-				>
-					<Plus class="h-4 w-4" />
-					<span>Add Resource</span>
-				</Button>
+				<!-- AUTH BUTTONS -->
+				{#if data.user}
+					<Button
+						onclick={openCreateModal}
+						size="sm"
+						class="gap-2 bg-blue-600 text-white hover:bg-blue-700 cursor-pointer"
+					>
+						<Plus class="h-4 w-4" />
+						<span class="hidden sm:inline">Add Resource</span>
+					</Button>
+
+					<form action="/logout" method="POST">
+						<Button variant="ghost" size="sm" type="submit" class="gap-2 cursor-pointer">
+							<LogOut class="h-4 w-4" />
+							<span class="hidden sm:inline">Logout</span>
+						</Button>
+					</form>
+				{:else}
+					<Button href="/login" size="sm" variant="outline" class="gap-2 cursor-pointer">
+						<LogIn class="h-4 w-4" />
+						Login
+					</Button>
+				{/if}
 			</nav>
 		</div>
 	</header>

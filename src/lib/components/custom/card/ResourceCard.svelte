@@ -1,12 +1,14 @@
 <!-- src/lib/components/custom/card/ResourceCard.svelte -->
 <script lang="ts">
 	import * as Card from '$lib/components/ui/card';
-	import * as AlertDialog from '$lib/components/ui/alert-dialog'; // Import Alert Dialog
+	import * as AlertDialog from '$lib/components/ui/alert-dialog'; 
 	import { Badge } from '$lib/components/ui/badge';
 	import { Button } from '$lib/components/ui/button';
 	import { enhance } from '$app/forms';
+	
 	import { modalStore } from '$lib/stores/modal';
 	import { toast } from '$lib/stores/toast';
+	import { page } from '$app/stores'; // Import page store
 	
 	import type { Resource } from '$lib/types';
 	
@@ -16,10 +18,11 @@
 		Book, HelpCircle, Pencil, Trash2 
 	} from 'lucide-svelte';
 
-	// Svelte 5 Props
 	let { resource } = $props<{ resource: Resource }>();
 
-	// Local State for the Delete Dialog
+	// Access user state from global page data
+	let user = $derived($page.data.user);
+
 	let deleteDialogOpen = $state(false);
 
 	function getTypeConfig(typeStr: string | undefined) {
@@ -62,27 +65,29 @@
 				{resource.expand?.type?.resource_type || 'Unknown'}
 			</Badge>
 
-			<div class="flex gap-1">
-				<Button
-					type="button"
-					variant="ghost"
-					size="icon"
-					class="h-8 w-8 text-slate-400 hover:text-slate-700 cursor-pointer"
-					onclick={() => modalStore.openEdit(resource)}
-				>
-					<Pencil class="w-4 h-4" />
-				</Button>
+			<!-- ONLY SHOW EDIT/DELETE BUTTONS IF LOGGED IN -->
+			{#if user}
+				<div class="flex gap-1">
+					<Button
+						type="button"
+						variant="ghost"
+						size="icon"
+						class="h-8 w-8 text-slate-400 hover:text-slate-700 cursor-pointer"
+						onclick={() => modalStore.openEdit(resource)}
+					>
+						<Pencil class="w-4 h-4" />
+					</Button>
 
-				<!-- TRIGGER BUTTON (Just opens the state) -->
-				<Button
-					variant="ghost"
-					size="icon"
-					class="h-8 w-8 text-slate-400 hover:text-red-600 cursor-pointer"
-					onclick={() => (deleteDialogOpen = true)}
-				>
-					<Trash2 class="w-4 h-4" />
-				</Button>
-			</div>
+					<Button
+						variant="ghost"
+						size="icon"
+						class="h-8 w-8 text-slate-400 hover:text-red-600 cursor-pointer"
+						onclick={() => (deleteDialogOpen = true)}
+					>
+						<Trash2 class="w-4 h-4" />
+					</Button>
+				</div>
+			{/if}
 		</div>
 
 		<Card.Title
@@ -138,16 +143,12 @@
 		<AlertDialog.Footer>
 			<AlertDialog.Cancel class="cursor-pointer">Cancel</AlertDialog.Cancel>
 
-			<!-- THE FORM IS NOW HERE -->
 			<form
 				action="/?/delete"
 				method="POST"
 				use:enhance={() => {
 					return async ({ result, update }) => {
-						// Close dialog immediately on submit start or keep open?
-						// Usually better to wait for result, but for optimistic UI:
 						deleteDialogOpen = false;
-
 						await update();
 						if (result.type === 'success') toast.success('Resource deleted successfully.');
 						else toast.error('Failed to delete resource.');
@@ -155,7 +156,6 @@
 				}}
 			>
 				<input type="hidden" name="id" value={resource.id} />
-				<!-- The Continue Button submits the form -->
 				<AlertDialog.Action
 					type="submit"
 					class="bg-red-600 hover:bg-red-700 text-white cursor-pointer"

@@ -3,12 +3,24 @@ import { api } from '$lib/server/api';
 import type { LayoutServerLoad } from './$types';
 import type { PocketBaseList, ResourceType } from '$lib/types';
 
-export const load: LayoutServerLoad = async () => {
+export const load: LayoutServerLoad = async ({ cookies }) => {
+	// 1. Check if user is logged in
+	// We convert the existence of the cookie to a boolean
+	const user = !!cookies.get('pb_auth');
+
+	let types: ResourceType[] = [];
+
 	try {
+		// 2. Fetch Resource Types (Global data used in dropdowns/filters)
 		const result = await api.getTypes() as PocketBaseList<ResourceType>;
-		return { types: result.items };
+		types = result.items;
 	} catch (e) {
 		console.error('Error loading types:', e);
-		return { types: [] };
+		// If API fails, types remains an empty array so the app doesn't crash
 	}
+
+	return { 
+		types,
+		user // Now available in +layout.svelte and all child pages
+	};
 };

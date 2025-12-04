@@ -3,8 +3,9 @@
 	import { enhance } from '$app/forms';
 	import { Button } from '$lib/components/ui/button';
 	import { goto } from '$app/navigation';
+	import { page } from '$app/stores'; // 1. Import page store
 	import * as Breadcrumb from '$lib/components/ui/breadcrumb';
-	import * as AlertDialog from '$lib/components/ui/alert-dialog'; // Import Alert Dialog
+	import * as AlertDialog from '$lib/components/ui/alert-dialog';
 
 	// Icons
 	import {
@@ -20,15 +21,15 @@
 	let { data } = $props();
 	let resource = $derived(data.resource);
 	
-	// Local state for the delete dialog
+	// 2. Derive user state from global page data
+	let user = $derived($page.data.user);
+	
 	let deleteDialogOpen = $state(false);
 
 	// --- Helpers ---
 	function formatDate(dateStr: string) {
 		return new Date(dateStr).toLocaleDateString('en-US', {
-			year: 'numeric',
-			month: 'long',
-			day: 'numeric'
+			year: 'numeric', month: 'long', day: 'numeric'
 		});
 	}
 
@@ -107,27 +108,29 @@
 					{/if}
 				</div>
 
-				<!-- Action Buttons -->
-				<div class="flex shrink-0 items-center gap-2">
-					<Button
-						variant="outline"
-						class="cursor-pointer gap-2"
-						onclick={() => modalStore.openEdit(resource)}
-					>
-						<Pencil class="h-4 w-4" />
-						Edit
-					</Button>
+				<!-- Action Buttons: ONLY SHOW IF LOGGED IN -->
+				{#if user}
+					<div class="flex shrink-0 items-center gap-2">
+						<Button
+							variant="outline"
+							class="cursor-pointer gap-2"
+							onclick={() => modalStore.openEdit(resource)}
+						>
+							<Pencil class="h-4 w-4" />
+							Edit
+						</Button>
 
-					<!-- TRIGGER BUTTON -->
-					<Button
-						variant="destructive"
-						class="cursor-pointer gap-2 border border-red-100 bg-red-50 text-red-600 shadow-none hover:bg-red-100 hover:text-red-700"
-						onclick={() => (deleteDialogOpen = true)}
-					>
-						<Trash2 class="h-4 w-4" />
-						Delete
-					</Button>
-				</div>
+						<!-- TRIGGER BUTTON -->
+						<Button
+							variant="destructive"
+							class="cursor-pointer gap-2 border border-red-100 bg-red-50 text-red-600 shadow-none hover:bg-red-100 hover:text-red-700"
+							onclick={() => (deleteDialogOpen = true)}
+						>
+							<Trash2 class="h-4 w-4" />
+							Delete
+						</Button>
+					</div>
+				{/if}
 			</div>
 
 			<!-- URL Box -->
@@ -219,11 +222,9 @@
 				use:enhance={({ cancel }) => {
 					return async ({ result }) => {
 						if (result.type === 'redirect') {
-							// 1. Success! Redirect
 							toast.success('Resource deleted successfully.');
 							goto(result.location);
 						} else if (result.type === 'failure' || result.type === 'error') {
-							// 2. Failure
 							deleteDialogOpen = false;
 							toast.error('Failed to delete resource');
 						}
