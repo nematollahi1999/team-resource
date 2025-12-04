@@ -1,9 +1,11 @@
+<!-- src/routes/+page.svelte -->
 <script lang="ts">
 	import { page } from '$app/stores';
 	import { goto } from '$app/navigation';
 	import { Button } from '$lib/components/ui/button';
 	import { Input } from '$lib/components/ui/input';
-	import * as Pagination from '$lib/components/ui/pagination'; // Shadcn Pagination
+	import * as Pagination from '$lib/components/ui/pagination';
+	import * as Select from '$lib/components/ui/select';
 	import { Search } from 'lucide-svelte';
 	import ResourceCard from '$lib/components/custom/card/ResourceCard.svelte';
 	
@@ -25,26 +27,24 @@
 		}
 	});
 
-	function handleTypeChange(e: Event) {
-		const val = (e.target as HTMLSelectElement).value;
-		updateQuery('type', val === 'all' ? '' : val);
-	}
+	// 3. Derived State for Select Value & Label
+	let currentTypeParam = $derived($page.url.searchParams.get('type') || 'all');
+	
+	// We derive the "Label" manually for the trigger button text
+	let triggerLabel = $derived.by(() => {
+		if (currentTypeParam === 'all') return 'All Types';
+		const found = data.types?.find((t) => t.resource_type === currentTypeParam);
+		return found ? found.resource_type : 'All Types';
+	});
 
 	function updateQuery(key: string, val: string) {
 		const url = new URL($page.url);
-
 		if (val) url.searchParams.set(key, val);
 		else url.searchParams.delete(key);
 
-		if (key !== 'page') {
-			url.searchParams.set('page', '1');
-		}
+		if (key !== 'page') url.searchParams.set('page', '1');
 
-		goto(url, {
-			keepFocus: true,
-			noScroll: true,
-			replaceState: true
-		});
+		goto(url, { keepFocus: true, noScroll: true, replaceState: true });
 	}
 
 	function clearFilters() {
@@ -66,20 +66,32 @@
 		</div>
 
 		<div class="w-full md:w-[200px]">
-			<select
-				class="border-input ring-offset-background placeholder:text-muted-foreground focus:ring-ring flex h-10 w-full items-center justify-between rounded-md border bg-background px-3 py-2 text-sm capitalize focus:outline-none focus:ring-1 focus:ring-offset-0 disabled:cursor-not-allowed disabled:opacity-50"
-				value={$page.url.searchParams.get('type') || 'all'}
-				onchange={handleTypeChange}
+			<!-- FIXED SHADCN SELECT -->
+			<Select.Root
+				type="single"
+				value={currentTypeParam}
+				onValueChange={(v: string) => {
+					// v is strictly a string here
+					if (v) {
+						updateQuery('type', v === 'all' ? '' : v);
+					}
+				}}
 			>
-				<option value="all">All Types</option>
-				{#if data.types}
-					{#each data.types as t}
-						<option value={t.resource_type} class="capitalize">
-							{t.resource_type}
-						</option>
-					{/each}
-				{/if}
-			</select>
+				<Select.Trigger class="w-full capitalize bg-white">
+					<!-- Render text directly to avoid component issues -->
+					{triggerLabel}
+				</Select.Trigger>
+				<Select.Content>
+					<Select.Item value="all" label="All Types">All Types</Select.Item>
+					{#if data.types}
+						{#each data.types as t}
+							<Select.Item value={t.resource_type} label={t.resource_type} class="capitalize">
+								{t.resource_type}
+							</Select.Item>
+						{/each}
+					{/if}
+				</Select.Content>
+			</Select.Root>
 		</div>
 	</div>
 
