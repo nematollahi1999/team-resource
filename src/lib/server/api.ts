@@ -17,7 +17,7 @@ interface FetchOptions {
 	method?: 'GET' | 'POST' | 'PATCH' | 'DELETE';
 	body?: unknown;
 	headers?: Record<string, string>;
-	token?: string; // New: Token for authenticated requests
+	token?: string; 
 }
 
 async function pbFetch<T>(path: string, options: FetchOptions = {}) {
@@ -31,7 +31,7 @@ async function pbFetch<T>(path: string, options: FetchOptions = {}) {
 
 	// If we have a token, add the Authorization header
 	if (options.token) {
-		headers['Authorization'] = options.token;
+		headers['Authorization'] = `Bearer ${options.token}`;
 	}
 
 	const config: RequestInit = {
@@ -77,15 +77,15 @@ export const api = {
 	},
 
 	// --- PUBLIC READS ---
-	getTypes: async () => {
-		return pbFetch('/resource_types/records?sort=resource_type');
+	getTypes: async (token?: string) => {
+		return pbFetch('/resource_types/records?sort=resource_type', { token });
 	},
 
-    getOneResource: async (id: string) => {
-        return pbFetch(`/resources/records/${id}?expand=type`);
+    getOneResource: async (id: string, token?: string) => {
+        return pbFetch(`/resources/records/${id}?expand=type`, { token });
     },
     
-	getResources: async (page: number, search: string, typeFilter: string, sort: string = '-created') => {
+	getResources: async (page: number, search: string, typeFilter: string, sort: string = '-created', token?: string) => {
 		const filters: string[] = [];
 		
 		if (search) {
@@ -107,7 +107,7 @@ export const api = {
 			query.append('filter', filters.join(' && '));
 		}
 		
-		return pbFetch(`/resources/records?${query.toString()}`);
+		return pbFetch(`/resources/records?${query.toString()}`, { token });
 	},
 
 	// --- PROTECTED WRITES (Require Token) ---

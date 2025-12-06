@@ -5,13 +5,14 @@ import type { PocketBaseList, ResourceType } from '$lib/types';
 
 export const load: LayoutServerLoad = async ({ cookies }) => {
 	// Check if user is logged in
-	const user = !!cookies.get('pb_auth');
+	const token = cookies.get('pb_auth');
+    const user = !!token;
 
 	let types: ResourceType[] = [];
 
 	try {
 		// Fetch Resource Types (Global data used in dropdowns/filters)
-		const result = await api.getTypes() as PocketBaseList<ResourceType>;
+		const result = await api.getTypes(token) as PocketBaseList<ResourceType>;
 		types = result.items;
 	} catch (e) {
 		console.error('Error loading types:', e);

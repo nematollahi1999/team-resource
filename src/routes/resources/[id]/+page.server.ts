@@ -8,17 +8,21 @@ import { requireAuth } from '$lib/server/auth';
 import type { PageServerLoad, Actions } from './$types';
 import type { Resource } from '$lib/types';
 
+
+
 export const load: PageServerLoad = async ({ params, cookies, url }) => {
     // 0. SECURITY: Pass 'url' so we know where to come back to
     requireAuth(cookies, url);
     // 1. Initialize an empty form so the global "Add Resource" modal in Layout still works
     const form = await superValidate(zod(resourceSchema));
 
+    const token = cookies.get('pb_auth');
+
     let resource: Resource;
 
     try {
         // 2. Fetch the specific resource (Public access, no token required)
-        const result = await api.getOneResource(params.id);
+        const result = await api.getOneResource(params.id, token);
         resource = result as Resource;
     } catch (e) {
         console.error('Error loading resource:', e);

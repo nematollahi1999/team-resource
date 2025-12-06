@@ -8,11 +8,13 @@ import { requireAuth } from '$lib/server/auth';
 import type { PageServerLoad, Actions } from './$types';
 import type { PocketBaseList, Resource } from '$lib/types';
 
-export const load: PageServerLoad = async ({ url }) => {
+export const load: PageServerLoad = async ({ url, cookies }) => {
 	const page = Number(url.searchParams.get('page')) || 1;
 	const search = url.searchParams.get('search') || '';
 	const typeFilter = url.searchParams.get('type') || '';
 	const sort = url.searchParams.get('sort') || '-created';
+
+	const token = cookies.get('pb_auth');
 
 	// Initialize empty form for the modal
 	const form = await superValidate(zod(resourceSchema));
@@ -27,7 +29,7 @@ export const load: PageServerLoad = async ({ url }) => {
 
 	try {
 		// Fetch resources (Public access, so no token needed)
-		const result = await api.getResources(page, search, typeFilter, sort);
+		const result = await api.getResources(page, search, typeFilter, sort, token);
 		resources = result as PocketBaseList<Resource>;
 	} catch (e) {
 		console.error('Error loading resources:', e);
