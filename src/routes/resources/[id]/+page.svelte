@@ -10,8 +10,8 @@
 	// Icons
 	import {
 		ExternalLink, Calendar, Clock, Pencil, Trash2,
-		FileText, PlayCircle, Wrench, GraduationCap, 
-		Book, HelpCircle
+		FileText, CirclePlay , Wrench, GraduationCap, 
+		Book, CircleQuestionMark, Loader 
 	} from 'lucide-svelte';
 
 	// Stores
@@ -21,10 +21,12 @@
 	let { data } = $props();
 	let resource = $derived(data.resource);
 	
-	// 2. Derive user state from global page data
 	let user = $derived(page.data.user);
 	
 	let deleteDialogOpen = $state(false);
+	
+	// 2. Add Loading State
+	let isDeleting = $state(false);
 
 	// --- Helpers ---
 	function formatDate(dateStr: string) {
@@ -37,11 +39,11 @@
 		const t = typeStr?.toLowerCase() || '';
 		switch (t) {
 			case 'article': return FileText;
-			case 'video': return PlayCircle;
+			case 'video': return CirclePlay ;
 			case 'tool': return Wrench;
 			case 'tutorial': return GraduationCap;
 			case 'docs': return Book;
-			default: return HelpCircle;
+			default: return CircleQuestionMark;
 		}
 	}
 
@@ -214,13 +216,19 @@
 		</AlertDialog.Header>
 
 		<AlertDialog.Footer>
-			<AlertDialog.Cancel class="cursor-pointer">Cancel</AlertDialog.Cancel>
+			<AlertDialog.Cancel disabled={isDeleting} class="cursor-pointer">Cancel</AlertDialog.Cancel>
 
 			<form
 				action="?/delete"
 				method="POST"
 				use:enhance={({ cancel }) => {
+					// 3. Start Loading
+					isDeleting = true;
+
 					return async ({ result }) => {
+						// 4. Stop Loading
+						isDeleting = false;
+
 						if (result.type === 'redirect') {
 							toast.success('Resource deleted successfully.');
 							goto(result.location);
@@ -231,11 +239,18 @@
 					};
 				}}
 			>
+				<!-- 5. Update Button UI -->
 				<AlertDialog.Action
 					type="submit"
-					class="bg-red-600 hover:bg-red-700 text-white cursor-pointer"
+					disabled={isDeleting}
+					class="bg-red-600 hover:bg-red-700 text-white cursor-pointer min-w-[90px]"
 				>
-					Delete
+					{#if isDeleting}
+						<Loader class="mr-2 h-4 w-4 animate-spin" />
+						Deleting...
+					{:else}
+						Delete
+					{/if}
 				</AlertDialog.Action>
 			</form>
 		</AlertDialog.Footer>

@@ -15,15 +15,17 @@
 	// Icons
 	import { 
 		FileText, CirclePlay , Wrench, GraduationCap, 
-		Book, CircleQuestionMark , Pencil, Trash2 
+		Book, CircleQuestionMark , Pencil, Trash2,
+		Loader 
 	} from 'lucide-svelte';
 
 	let { resource } = $props<{ resource: Resource }>();
 
-	// Access user state from global page data
 	let user = $derived(page.data.user);
 
 	let deleteDialogOpen = $state(false);
+	// 2. Add loading state
+	let isDeleting = $state(false);
 
 	function getTypeConfig(typeStr: string | undefined) {
 		const t = typeStr?.toLowerCase() || '';
@@ -53,13 +55,6 @@
 		return "Just now";
 	}
 
-	// function handleViewDetails(e: MouseEvent) {
-    //     if (!user) {
-    //         e.preventDefault();
-    //         toast.error('You must be logged in to see the resource.');
-    //     }
-    // }
-
 	let typeData = $derived(getTypeConfig(resource.expand?.type?.resource_type));
 	let TypeIcon = $derived(typeData.icon);
 </script>
@@ -72,7 +67,6 @@
 				{resource.expand?.type?.resource_type || 'Unknown'}
 			</Badge>
 
-			<!-- ONLY SHOW EDIT/DELETE BUTTONS IF LOGGED IN -->
 			{#if user}
 				<div class="flex gap-1">
 					<Button
@@ -128,7 +122,6 @@
 		<Button
 			variant="link"
 			class="text-blue-600 p-0 h-auto font-semibold text-sm hover:text-blue-700"
-			
 			href={`/resources/${resource.id}`}
 		>
 			View Details
@@ -149,26 +142,46 @@
 		</AlertDialog.Header>
 
 		<AlertDialog.Footer>
-			<AlertDialog.Cancel class="cursor-pointer">Cancel</AlertDialog.Cancel>
+			<!-- Disable Cancel if deleting -->
+			<AlertDialog.Cancel disabled={isDeleting} class="cursor-pointer">Cancel</AlertDialog.Cancel>
 
 			<form
 				action="/?/delete"
 				method="POST"
 				use:enhance={() => {
+					// 3. Start Loading
+					isDeleting = true;
+
 					return async ({ result, update }) => {
-						deleteDialogOpen = false;
-						await update();
-						if (result.type === 'success') toast.success('Resource deleted successfully.');
-						else toast.error('Failed to delete resource.');
+						// 4. Stop Loading
+						isDeleting = false;
+						
+						// Handle result
+						if (result.type === 'success') {
+							deleteDialogOpen = false;
+							toast.success('Resource deleted successfully.');
+							await update();
+						} else if (result.type === 'failure' || result.type === 'error') {
+							// Keep dialog open on error so user can try again
+							toast.error('Failed to delete resource.');
+						}
 					};
 				}}
 			>
 				<input type="hidden" name="id" value={resource.id} />
+				
+				<!-- 5. Update Button UI -->
 				<AlertDialog.Action
 					type="submit"
-					class="bg-red-600 hover:bg-red-700 text-white cursor-pointer"
+					disabled={isDeleting}
+					class="bg-red-600 hover:bg-red-700 text-white cursor-pointer min-w-[90px]"
 				>
-					Continue
+					{#if isDeleting}
+						<Loader class="mr-2 h-4 w-4 animate-spin" />
+						Deleting...
+					{:else}
+						Continue
+					{/if}
 				</AlertDialog.Action>
 			</form>
 		</AlertDialog.Footer>
