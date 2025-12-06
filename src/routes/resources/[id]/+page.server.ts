@@ -8,9 +8,9 @@ import { requireAuth } from '$lib/server/auth';
 import type { PageServerLoad, Actions } from './$types';
 import type { Resource } from '$lib/types';
 
-export const load: PageServerLoad = async (event) => {
-    const { params } = event;
-    
+export const load: PageServerLoad = async ({ params, cookies, url }) => {
+    // 0. SECURITY: Pass 'url' so we know where to come back to
+    requireAuth(cookies, url);
     // 1. Initialize an empty form so the global "Add Resource" modal in Layout still works
     const form = await superValidate(zod(resourceSchema));
 

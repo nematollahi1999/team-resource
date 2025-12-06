@@ -8,7 +8,7 @@
 	
 	import { modalStore } from '$lib/stores/modal';
 	import { toast } from '$lib/stores/toast';
-	import { page } from '$app/stores'; // Import page store
+	import { page } from '$app/stores';
 	
 	import type { Resource } from '$lib/types';
 	
@@ -52,6 +52,13 @@
 		if (interval > 1) return Math.floor(interval) + " hours ago";
 		return "Just now";
 	}
+
+	// function handleViewDetails(e: MouseEvent) {
+    //     if (!user) {
+    //         e.preventDefault();
+    //         toast.error('You must be logged in to see the resource.');
+    //     }
+    // }
 
 	let typeData = $derived(getTypeConfig(resource.expand?.type?.resource_type));
 	let TypeIcon = $derived(typeData.icon);
@@ -121,6 +128,7 @@
 		<Button
 			variant="link"
 			class="text-blue-600 p-0 h-auto font-semibold text-sm hover:text-blue-700"
+			
 			href={`/resources/${resource.id}`}
 		>
 			View Details

@@ -17,7 +17,7 @@ export const load: PageServerLoad = async ({ cookies }) => {
 };
 
 export const actions: Actions = {
-	default: async ({ request, cookies }) => {
+	default: async ({ request, cookies, url }) => {
 		const form = await superValidate(request, zod(loginSchema));
 
 		if (!form.valid) return fail(400, { form });
@@ -46,7 +46,8 @@ export const actions: Actions = {
             console.error(e);
 			return message(form, 'Something went wrong', { status: 500 });
 		}
-
-		throw redirect(303, '/');
+        // 3. Redirect to intended page or home
+        const redirectTo = url.searchParams.get('redirectTo') || '/';
+		throw redirect(303, redirectTo);
 	}
 };

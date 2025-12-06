@@ -9,10 +9,36 @@
 	import * as Card from '$lib/components/ui/card';
     import { Loader2 } from 'lucide-svelte';
 
+	//imports for the url redirection after login
+	import { page } from '$app/stores';
+	import { toast } from '$lib/stores/toast';
+	import { replaceState } from '$app/navigation';
+	import { onMount } from 'svelte';
+
 	let { data } = $props();
 
 	const { form, errors, enhance, delayed, message } = superForm(data.form, {
 		validators: zodClient(loginSchema)
+	});
+
+	onMount(() => {
+		const params = new URLSearchParams($page.url.searchParams);
+
+		if (params.get('message') === 'login_required') {
+			toast.error('You must be logged in to view this resource.');
+
+			// FIX: Wrap in setTimeout to ensure Router is initialized
+			setTimeout(() => {
+				// Remove ONLY the 'message' param. 
+				// IMPORTANT: Keep 'redirectTo' so the form knows where to go!
+				params.delete('message');
+
+				const newUrl = new URL($page.url);
+				newUrl.search = params.toString();
+
+				replaceState(newUrl, $page.state);
+			}, 0);
+		}
 	});
 </script>
 
