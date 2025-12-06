@@ -2,12 +2,12 @@
 <script lang="ts">
 	import { page } from '$app/stores';
 	import { Button } from '$lib/components/ui/button';
-	import { AlertTriangle, Home, RotateCcw } from 'lucide-svelte';
+	import { TriangleAlert , House , RotateCcw } from 'lucide-svelte';
 </script>
 
 <div class="flex min-h-[80vh] flex-col items-center justify-center p-4 text-center">
 	<div class="rounded-full bg-red-100 p-4 dark:bg-red-900/20">
-		<AlertTriangle class="h-12 w-12 text-red-600 dark:text-red-500" />
+		<TriangleAlert  class="h-12 w-12 text-red-600 dark:text-red-500" />
 	</div>
 
 	<h1 class="mt-6 text-4xl font-bold tracking-tight text-slate-900 dark:text-white">
@@ -18,7 +18,7 @@
 		{$page.error?.message || 'Something went wrong.'}
 	</p>
 
-	<!-- In Dev Mode, show the stack trace for easier debugging -->
+	
 	<!-- We cast to 'any' here because App.Error doesn't officially have 'stack' by default -->
 	{#if ($page.error as any)?.stack}
 		<div
@@ -35,7 +35,7 @@
 		</Button>
 
 		<Button href="/" class="gap-2 cursor-pointer">
-			<Home class="h-4 w-4" />
+			<House  class="h-4 w-4" />
 			Back to Home
 		</Button>
 	</div>

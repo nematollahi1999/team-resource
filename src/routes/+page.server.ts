@@ -1,7 +1,7 @@
 // src/routes/+page.server.ts
-import { api } from '$lib/server/api';
+import { api, ApiError } from '$lib/server/api'; // Import ApiError
 import { resourceSchema } from '$lib/schemas';
-import { superValidate, message } from 'sveltekit-superforms';
+import { superValidate, message, setError } from 'sveltekit-superforms'; // Import setError
 import { zod } from 'sveltekit-superforms/adapters';
 import { fail } from '@sveltejs/kit';
 import { requireAuth } from '$lib/server/auth';
@@ -48,17 +48,30 @@ export const actions: Actions = {
 		}
 
 		try {
-			// 2. Pass token to API
+			// 2. Pass token and form to API
 			await api.createResource(form.data, token);
 		} catch (e) {
-			console.error(e);
-			return message(form, 'Failed to create resource', { status: 500 });
+			// 3. Handle specific API errors
+			if (e instanceof ApiError) {
+				// Map field-specific validation errors (e.g. title: "Already exists")
+				if (e.data) {
+					for (const field in e.data) {
+						setError(form, field as any, e.data[field].message);
+					}
+				}
+				// Return the specific status code (e.g. 400) and message
+				return message(form, e.message, { status: e.status as any });
+			}
+
+			// 4. Handle unexpected crashes
+			console.error('Create Error:', e);
+			return message(form, 'Internal Server Error', { status: 500 });
 		}
+		
 		return message(form, 'Resource created successfully!');
 	},
 
 	updateResource: async ({ request, cookies }) => {
-		// 1. Check Auth & Get Token
 		const token = requireAuth(cookies);
 
 		const formData = await request.formData();
@@ -72,18 +85,25 @@ export const actions: Actions = {
 		}
 
 		try {
-			// 2. Pass token to API
 			await api.updateResource(id, form.data, token);
 		} catch (e) {
-			console.error(e);
-			return message(form, 'Failed to update resource', { status: 500 });
+			if (e instanceof ApiError) {
+				if (e.data) {
+					for (const field in e.data) {
+						setError(form, field as any, e.data[field].message);
+					}
+				}
+				return message(form, e.message, { status: e.status as any });
+			}
+
+			console.error('Update Error:', e);
+			return message(form, 'Internal Server Error', { status: 500 });
 		}
 
 		return message(form, 'Resource updated successfully!');
 	},
 
 	delete: async ({ request, cookies }) => {
-		// 1. Check Auth & Get Token
 		const token = requireAuth(cookies);
 
 		const formData = await request.formData();
@@ -94,10 +114,15 @@ export const actions: Actions = {
 		}
 
 		try {
-			// 2. Pass token to API
 			await api.deleteResource(id, token);
 			return { success: true };
 		} catch (e) {
+			if (e instanceof ApiError) {
+				// For delete, we don't have a 'form' object to attach errors to,
+				// so we return a standard fail with the error message.
+				return fail(e.status, { error: e.message });
+			}
+			
 			console.error('Delete failed:', e);
 			return fail(500, { error: 'Could not delete resource' });
 		}

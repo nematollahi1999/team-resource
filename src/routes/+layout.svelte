@@ -43,7 +43,7 @@
 >
 	{#each $toast as t (t.id)}
 		{@const config = getAlertConfig(t.type)}
-		<!-- FIX: Assign component to a capitalized variable for Svelte 5 -->
+		<!-- Assign component to a capitalized variable  -->
 		{@const Icon = config.icon}
 
 		<div transition:fly={{ x: 300, duration: 300 }} class="pointer-events-auto">

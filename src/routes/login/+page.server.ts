@@ -23,8 +23,8 @@ export const actions: Actions = {
 		if (!form.valid) return fail(400, { form });
 
 		try {
-            // 1. Call API to get token
-            // The schema has 'email', but API expects 'identity'
+            // Call API to get token
+            // The schema 'email' as API 'identity'
 			const result = await api.login({
                 identity: form.data.email,
                 password: form.data.password
