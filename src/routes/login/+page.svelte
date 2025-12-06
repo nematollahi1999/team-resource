@@ -13,11 +13,11 @@
 	import { page } from '$app/stores';
 	import { toast } from '$lib/stores/toast';
 	import { replaceState } from '$app/navigation';
-	import { onMount } from 'svelte';
+	import { onMount, untrack } from 'svelte';
 
 	let { data } = $props();
 
-	const { form, errors, enhance, delayed, message } = superForm(data.form, {
+	const { form, errors, enhance, delayed, message } = superForm(untrack(() => data.form), {
 		validators: zodClient(loginSchema)
 	});
 
