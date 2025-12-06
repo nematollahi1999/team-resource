@@ -37,7 +37,11 @@
 	}
 </script>
 
-<!-- FLOATING ALERT CONTAINER -->
+<svelte:head>
+    <title>Team Resource Library</title>
+</svelte:head>
+
+
 <div
 	class="fixed top-4 right-4 z-100 flex flex-col gap-3 w-full max-w-[400px] px-4 md:px-0 pointer-events-none"
 >
