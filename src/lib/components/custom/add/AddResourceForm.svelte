@@ -49,9 +49,18 @@
 			$form.title = r.title;
 			$form.url = r.url;
 			$form.description = r.description;
-			// Handle ID or expanded object
 			$form.type = r.expand?.type?.id || r.type || ''; 
-			$form.tags = r.tags || '';
+			
+            // FIX: Clean the tags before showing them in the input
+            // 1. Split by comma
+            // 2. Trim spaces
+            // 3. Remove empty entries
+            // 4. Join with ", " (comma + space) for better readability while editing
+			$form.tags = (r.tags || '')
+                .split(',')
+                .map(tag => tag.trim())
+                .filter(tag => tag.length > 0)
+                .join(', ');
 		} 
 	});
 

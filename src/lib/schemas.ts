@@ -7,7 +7,14 @@ export const resourceSchema = z.object({
 	url: z.string().url('Must be a valid URL'),
 	description: z.string().min(10, 'Description must be at least 10 characters'),
 	type: z.string().min(1, 'Please select a type'),
-	tags: z.string().optional().default('')
+	tags: z.string().optional().default('').transform((val) => {
+		if (!val) return '';
+		return val
+			.split(',')                 // Split string by commas
+			.map((tag) => tag.trim())   // Remove whitespace around each tag
+			.filter((tag) => tag.length > 0) // Remove empty strings
+			.join(',');                 // Join back into a clean string
+	})
 });
 
 export type ResourceData = z.infer<typeof resourceSchema>;
