@@ -8,10 +8,11 @@
 	import { Label } from '$lib/components/ui/label';
 	import * as Card from '$lib/components/ui/card';
     import { Loader } from 'lucide-svelte';
+	import { untrack } from 'svelte';
 
 	let { data } = $props();
 
-	const { form, errors, enhance, delayed, message } = superForm(data.form, {
+	const { form, errors, enhance, delayed, message } = superForm(untrack(() => data.form), {
 		validators: zodClient(registerSchema)
 	});
 </script>
