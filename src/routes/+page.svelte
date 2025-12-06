@@ -6,10 +6,12 @@
 	import { Input } from '$lib/components/ui/input';
 	import * as Pagination from '$lib/components/ui/pagination';
 	import * as Select from '$lib/components/ui/select';
-	import { Search } from 'lucide-svelte';
+	import { Search, Lock  } from 'lucide-svelte';
 	import ResourceCard from '$lib/components/custom/card/ResourceCard.svelte';
 	
 	let { data } = $props();
+
+	let user = $derived($page.data.user);
 
 	// --- CONSTANTS ---
 	const sortOptions = [
@@ -151,14 +153,31 @@
 				<ResourceCard resource={item} />
 			{/each}
 		{:else}
-			<div
-				class="col-span-1 rounded-lg border border-dashed border-slate-300 bg-slate-50/50 py-20 text-center md:col-span-3"
-			>
-				<p class="text-lg font-medium text-slate-600">No resources found</p>
-				<p class="mt-1 text-sm text-slate-500">Try adjusting your search or filters</p>
-				<Button variant="link" onclick={clearFilters} class="mt-2 text-blue-600 cursor-pointer">
-					Clear Filters
-				</Button>
+			<!-- EMPTY STATE -->
+			<div class="col-span-1 rounded-lg border border-dashed border-slate-300 bg-slate-50/50 py-20 text-center md:col-span-3">
+				
+				<!-- NEW: Check if user is logged in -->
+				{#if !user}
+					<div class="flex flex-col items-center justify-center gap-2">
+						<div class="rounded-full bg-slate-100 p-3 mb-2">
+							<Lock class="h-6 w-6 text-slate-400" />
+						</div>
+						<h3 class="text-lg font-semibold text-slate-900">Authentication Required</h3>
+						<p class="text-sm text-slate-500 max-w-sm mx-auto mb-4">
+							Our resource library is protected. Please log in to view and manage team resources.
+						</p>
+						<Button href="/login">Login to View Resources</Button>
+					</div>
+				
+				{:else}
+					<!-- User IS logged in, but search/filter returned no results -->
+					<p class="text-lg font-medium text-slate-600">No resources found</p>
+					<p class="mt-1 text-sm text-slate-500">Try adjusting your search or filters</p>
+					<Button variant="link" onclick={clearFilters} class="mt-2 text-blue-600 cursor-pointer">
+						Clear Filters
+					</Button>
+				{/if}
+
 			</div>
 		{/if}
 	</div>
