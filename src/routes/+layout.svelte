@@ -42,7 +42,7 @@
 </svelte:head>
 
 <!-- FLOATING ALERT CONTAINER -->
-<div class="fixed top-4 right-4 z-[100] flex flex-col gap-3 w-full max-w-[400px] px-4 md:px-0 pointer-events-none">
+<div class="fixed top-4 right-4 z-100 flex flex-col gap-3 w-full max-w-[400px] px-4 md:px-0 pointer-events-none">
 	{#each $toast as t (t.id)}
 		{@const config = getAlertConfig(t.type)}
 		{@const Icon = config.icon}
@@ -67,7 +67,7 @@
 </div>
 
 <div class="min-h-screen flex flex-col bg-slate-50 font-sans antialiased">
-	<header class="sticky top-0 z-50 w-full border-b bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60">
+	<header class="sticky top-0 z-50 w-full border-b bg-white/95 backdrop-blur supports-backdrop-filter:bg-white/60">
 		<div class="container mx-auto flex h-14 items-center px-4 justify-between">
 			<a href="/" class="flex items-center gap-2 font-bold text-xl hover:opacity-80 transition">
 				<Book class="h-6 w-6 text-blue-600" />
