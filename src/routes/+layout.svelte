@@ -10,7 +10,7 @@
 	// Icons
 	import { 
 		Book, Plus, Library, X, 
-		CheckCircle2, AlertCircle, Info, LogOut, LogIn
+		CircleCheck , CircleAlert , Info, LogOut, LogIn
 	} from 'lucide-svelte';
 	
 	import AddResourceForm from '$lib/components/custom/add/AddResourceForm.svelte';
@@ -30,8 +30,8 @@
 	
 	function getAlertConfig(type: string) {
 		switch (type) {
-			case 'error': return { variant: 'destructive' as const, icon: AlertCircle, title: 'Error' };
-			case 'success': return { variant: 'default' as const, icon: CheckCircle2, title: 'Success' };
+			case 'error': return { variant: 'destructive' as const, icon: CircleAlert , title: 'Error' };
+			case 'success': return { variant: 'default' as const, icon: CircleCheck , title: 'Success' };
 			default: return { variant: 'default' as const, icon: Info, title: 'Info' };
 		}
 	}
@@ -117,7 +117,7 @@
 	</header>
 
 	<main class="flex-1 container mx-auto py-8 px-4">
-		{@render children()}
+		{@render children?.()}
 	</main>
 
 	<footer class="border-t bg-white py-6 md:py-0">

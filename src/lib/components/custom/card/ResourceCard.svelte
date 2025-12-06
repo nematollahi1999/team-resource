@@ -14,8 +14,8 @@
 	
 	// Icons
 	import { 
-		FileText, PlayCircle, Wrench, GraduationCap, 
-		Book, HelpCircle, Pencil, Trash2 
+		FileText, CirclePlay , Wrench, GraduationCap, 
+		Book, CircleQuestionMark , Pencil, Trash2 
 	} from 'lucide-svelte';
 
 	let { resource } = $props<{ resource: Resource }>();
@@ -29,11 +29,11 @@
 		const t = typeStr?.toLowerCase() || '';
 		switch (t) {
 			case 'article': return { icon: FileText, color: 'bg-blue-100 text-blue-700 hover:bg-blue-200 border-blue-200' };
-			case 'video': return { icon: PlayCircle, color: 'bg-red-100 text-red-700 hover:bg-red-200 border-red-200' };
+			case 'video': return { icon: CirclePlay , color: 'bg-red-100 text-red-700 hover:bg-red-200 border-red-200' };
 			case 'tool': return { icon: Wrench, color: 'bg-green-100 text-green-700 hover:bg-green-200 border-green-200' };
 			case 'tutorial': return { icon: GraduationCap, color: 'bg-purple-100 text-purple-700 hover:bg-purple-200 border-purple-200' };
 			case 'docs': return { icon: Book, color: 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200 border-yellow-200' };
-			default: return { icon: HelpCircle, color: 'bg-gray-100 text-gray-700 hover:bg-gray-200 border-gray-200' };
+			default: return { icon: CircleQuestionMark , color: 'bg-gray-100 text-gray-700 hover:bg-gray-200 border-gray-200' };
 		}
 	}
 

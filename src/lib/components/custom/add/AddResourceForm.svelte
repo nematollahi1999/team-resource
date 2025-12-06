@@ -3,18 +3,33 @@
 	import { Input } from '$lib/components/ui/input';
 	import { Button } from '$lib/components/ui/button';
 	import { Label } from '$lib/components/ui/label';
+	import * as Select from '$lib/components/ui/select';
+
 	import { superForm } from 'sveltekit-superforms';
 	import { zodClient } from 'sveltekit-superforms/adapters';
-	import { resourceSchema } from '$lib/schemas';
+	import type { SuperValidated } from 'sveltekit-superforms';
+
+	import { resourceSchema, type ResourceData } from '$lib/schemas';
+	import type { ResourceType } from '$lib/types';
+
 	import { toast } from '$lib/stores/toast';
 	import { modalStore } from '$lib/stores/modal';
 
-	let { types = [], onSuccess, data } = $props();
+	// Svelte 5 Props
+	let { 
+		types = [], 
+		onSuccess, 
+		data 
+	} = $props<{ 
+		types: ResourceType[], 
+		onSuccess: () => void, 
+		data: SuperValidated<ResourceData> 
+	}>();
 
 	// Initialize Superform
 	const { form, errors, constraints, enhance, delayed, reset } = superForm(data, {
 		validators: zodClient(resourceSchema),
-		resetForm: false, // We handle reset manually
+		resetForm: false, 
 		onResult: ({ result }) => {
 			if (result.type === 'success') {
 				const action = $modalStore.mode === 'create' ? 'added' : 'updated';
@@ -29,17 +44,24 @@
 
 	// React to Modal Opening for EDIT mode
 	$effect(() => {
-		if ($modalStore.mode === 'edit' && $modalStore.resource && $modalStore.isOpen) {
+		if ($modalStore.isOpen && $modalStore.mode === 'edit' && $modalStore.resource) {
 			const r = $modalStore.resource;
 			$form.title = r.title;
 			$form.url = r.url;
 			$form.description = r.description;
-			$form.type = r.expand?.type?.id || r.type; // Handle ID or expanded object
-			$form.tags = r.tags;
-			// We handle ID via hidden input
-		} else if ($modalStore.mode === 'create' && !$modalStore.isOpen) {
-			// Optional: reset() here if you want to clear form on close
-		}
+			// Handle ID or expanded object
+			$form.type = r.expand?.type?.id || r.type || ''; 
+			$form.tags = r.tags || '';
+		} 
+	});
+
+	// Derived state: Calculate the label to show in the Select Trigger
+	// This avoids using <Select.Value> which can cause crashes in some setups
+	let selectedTypeLabel = $derived.by(() => {
+		const selectedId = $form.type;
+		if (!selectedId) return "Select resource type";
+		const found = types.find((t: ResourceType) => t.id === selectedId);
+		return found ? found.resource_type : "Select resource type";
 	});
 
 	let charCount = $derived($form.description ? $form.description.length : 0);
@@ -47,6 +69,7 @@
 </script>
 
 <form method="POST" action={formAction} use:enhance class="space-y-5" novalidate>
+	
 	{#if $modalStore.mode === 'edit' && $modalStore.resource}
 		<input type="hidden" name="id" value={$modalStore.resource.id} />
 	{/if}
@@ -62,7 +85,9 @@
 			bind:value={$form.title}
 			{...$constraints.title}
 		/>
-		{#if $errors.title}<span class="text-red-500 text-xs">{$errors.title}</span>{/if}
+		{#if $errors.title}
+			<span class="text-red-500 text-xs">{$errors.title}</span>
+		{/if}
 	</div>
 
 	<!-- URL -->
@@ -76,7 +101,9 @@
 			bind:value={$form.url}
 			{...$constraints.url}
 		/>
-		{#if $errors.url}<span class="text-red-500 text-xs">{$errors.url}</span>{/if}
+		{#if $errors.url}
+			<span class="text-red-500 text-xs">{$errors.url}</span>
+		{/if}
 	</div>
 
 	<!-- Description -->
@@ -91,27 +118,48 @@
 			{...$constraints.description}
 		></textarea>
 		<div class="flex justify-between items-center">
-			<span class="text-red-500 text-xs h-4 block">{$errors.description || ''}</span>
+			<span class="text-red-500 text-xs h-4 block">
+				{$errors.description ? $errors.description : ''}
+			</span>
 			<span class="text-xs text-muted-foreground">{charCount} characters</span>
 		</div>
 	</div>
 
-	<!-- Type -->
+	<!-- SHADCN SELECT for Type -->
 	<div class="space-y-2">
 		<Label for="type">Type <span class="text-red-500">*</span></Label>
-		<select
-			id="type"
-			name="type"
-			class="flex h-10 w-full items-center justify-between rounded-md border border-gray-200 bg-white px-3 py-2 text-sm ring-offset-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-400 disabled:cursor-not-allowed disabled:opacity-50"
+		
+		<!-- 1. The Visual Component -->
+		<!-- Note: We do NOT put name="type" here to avoid duplicate inputs with the hidden one below -->
+		<Select.Root
+			type="single"
 			bind:value={$form.type}
-			{...$constraints.type}
 		>
-			<option value="" disabled selected>Select resource type</option>
-			{#each types as t}
-				<option value={t.id}>{t.resource_type}</option>
-			{/each}
-		</select>
-		{#if $errors.type}<span class="text-red-500 text-xs">{$errors.type}</span>{/if}
+			<Select.Trigger class="w-full capitalize bg-white">
+				<!-- Render Label Directly -->
+				{selectedTypeLabel}
+			</Select.Trigger>
+			<Select.Content>
+				{#each types as t}
+					<Select.Item value={t.id} label={t.resource_type} class="capitalize">
+						{t.resource_type}
+					</Select.Item>
+				{/each}
+			</Select.Content>
+		</Select.Root>
+
+		<!-- 2. The Hidden Input (Crucial for Superforms) -->
+		<!-- This ensures the form data is sent correctly even if JS acts up -->
+		<input 
+			type="hidden" 
+			name="type" 
+			bind:value={$form.type} 
+			{...$constraints.type} 
+		/>
+
+		{#if $errors.type}
+			<span class="text-red-500 text-xs">{$errors.type}</span>
+		{/if}
 	</div>
 
 	<!-- Tags -->
