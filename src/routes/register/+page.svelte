@@ -7,7 +7,7 @@
 	import { Button } from '$lib/components/ui/button';
 	import { Label } from '$lib/components/ui/label';
 	import * as Card from '$lib/components/ui/card';
-    import { Loader2 } from 'lucide-svelte';
+    import { Loader } from 'lucide-svelte';
 
 	let { data } = $props();
 
@@ -61,7 +61,7 @@
 
 				<Button type="submit" class="w-full" disabled={$delayed}>
 					{#if $delayed}
-						<Loader2 class="mr-2 h-4 w-4 animate-spin" />
+						<Loader class="mr-2 h-4 w-4 animate-spin" />
 					{/if}
 					Create Account
 				</Button>

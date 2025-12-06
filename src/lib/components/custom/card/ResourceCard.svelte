@@ -8,7 +8,7 @@
 	
 	import { modalStore } from '$lib/stores/modal';
 	import { toast } from '$lib/stores/toast';
-	import { page } from '$app/stores';
+	import { page } from '$app/state';
 	
 	import type { Resource } from '$lib/types';
 	
@@ -21,7 +21,7 @@
 	let { resource } = $props<{ resource: Resource }>();
 
 	// Access user state from global page data
-	let user = $derived($page.data.user);
+	let user = $derived(page.data.user);
 
 	let deleteDialogOpen = $state(false);
 

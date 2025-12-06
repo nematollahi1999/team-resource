@@ -1,6 +1,6 @@
 <!-- src/routes/+page.svelte -->
 <script lang="ts">
-	import { page } from '$app/stores';
+	import { page } from '$app/state';
 	import { goto } from '$app/navigation';
 	import { Button } from '$lib/components/ui/button';
 	import { Input } from '$lib/components/ui/input';
@@ -11,7 +11,7 @@
 	
 	let { data } = $props();
 
-	let user = $derived($page.data.user);
+	let user = $derived(page.data.user);
 
 	// --- CONSTANTS ---
 	const sortOptions = [
@@ -23,12 +23,12 @@
 	];
 
 	// --- STATE ---
-	let searchTerm = $state($page.url.searchParams.get('search') || '');
+	let searchTerm = $state(page.url.searchParams.get('search') || '');
 	let timer: ReturnType<typeof setTimeout>;
 
 	// 1. Debounce Logic
 	$effect(() => {
-		const currentUrlSearch = $page.url.searchParams.get('search') || '';
+		const currentUrlSearch = page.url.searchParams.get('search') || '';
 		
 		if (searchTerm !== currentUrlSearch) {
 			clearTimeout(timer);
@@ -39,7 +39,7 @@
 	});
 
 	// 2. Type Select Logic
-	let currentTypeParam = $derived($page.url.searchParams.get('type') || 'all');
+	let currentTypeParam = $derived(page.url.searchParams.get('type') || 'all');
 	
 	let typeTriggerLabel = $derived.by(() => {
 		if (currentTypeParam === 'all') return 'All Types';
@@ -48,7 +48,7 @@
 	});
 
 	// 3. Sort Select Logic
-	let currentSortParam = $derived($page.url.searchParams.get('sort') || '-created');
+	let currentSortParam = $derived(page.url.searchParams.get('sort') || '-created');
 
 	let sortTriggerLabel = $derived.by(() => {
 		const found = sortOptions.find(o => o.value === currentSortParam);
@@ -57,7 +57,7 @@
 
 	// --- HELPERS ---
 	function updateQuery(key: string, val: string) {
-		const url = new URL($page.url);
+		const url = new URL(page.url);
 
 		if (val && val !== 'all') url.searchParams.set(key, val);
 		else url.searchParams.delete(key);
@@ -72,7 +72,7 @@
 
 	function clearFilters() {
 		searchTerm = '';
-		const url = new URL($page.url);
+		const url = new URL(page.url);
 		url.searchParams.delete('search');
 		url.searchParams.delete('type');
 		url.searchParams.delete('sort');

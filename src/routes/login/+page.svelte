@@ -7,10 +7,10 @@
 	import { Button } from '$lib/components/ui/button';
 	import { Label } from '$lib/components/ui/label';
 	import * as Card from '$lib/components/ui/card';
-    import { Loader2 } from 'lucide-svelte';
+    import { Loader } from 'lucide-svelte';
 
 	//imports for the url redirection after login
-	import { page } from '$app/stores';
+	import { page } from '$app/state';
 	import { toast } from '$lib/stores/toast';
 	import { replaceState } from '$app/navigation';
 	import { onMount, untrack } from 'svelte';
@@ -22,7 +22,7 @@
 	});
 
 	onMount(() => {
-		const params = new URLSearchParams($page.url.searchParams);
+		const params = new URLSearchParams(page.url.searchParams);
 
 		if (params.get('message') === 'login_required') {
 			toast.error('You must be logged in to view this resource.');
@@ -33,10 +33,10 @@
 				// IMPORTANT: Keep 'redirectTo' so the form knows where to go!
 				params.delete('message');
 
-				const newUrl = new URL($page.url);
+				const newUrl = new URL(page.url);
 				newUrl.search = params.toString();
 
-				replaceState(newUrl, $page.state);
+				replaceState(newUrl, page.state);
 			}, 0);
 		}
 	});
@@ -74,7 +74,7 @@
 
 				<Button type="submit" class="w-full" disabled={$delayed}>
 					{#if $delayed}
-						<Loader2 class="mr-2 h-4 w-4 animate-spin" />
+						<Loader class="mr-2 h-4 w-4 animate-spin" />
 					{/if}
 					Login
 				</Button>

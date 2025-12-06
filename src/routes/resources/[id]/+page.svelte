@@ -3,7 +3,7 @@
 	import { enhance } from '$app/forms';
 	import { Button } from '$lib/components/ui/button';
 	import { goto } from '$app/navigation';
-	import { page } from '$app/stores'; // 1. Import page store
+	import { page } from '$app/state'; 
 	import * as Breadcrumb from '$lib/components/ui/breadcrumb';
 	import * as AlertDialog from '$lib/components/ui/alert-dialog';
 
@@ -22,7 +22,7 @@
 	let resource = $derived(data.resource);
 	
 	// 2. Derive user state from global page data
-	let user = $derived($page.data.user);
+	let user = $derived(page.data.user);
 	
 	let deleteDialogOpen = $state(false);
 
