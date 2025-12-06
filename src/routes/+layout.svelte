@@ -7,6 +7,7 @@
 	import * as Dialog from '$lib/components/ui/dialog';
 	import { fly } from 'svelte/transition';
 	
+	
 	import { 
 		Book, Plus, Library, X, 
 		CircleCheck, CircleAlert, Info, LogOut, LogIn
@@ -35,6 +36,8 @@
 			default: return { variant: 'default' as const, icon: Info, title: 'Info' };
 		}
 	}
+
+	
 </script>
 
 <svelte:head>
@@ -76,7 +79,7 @@
 			</a>
 
 			<nav class="flex items-center gap-4">
-				<Button href="/" variant="ghost" size="sm" class="gap-2 cursor-pointer">
+				<Button href="/" data-sveltekit-replacestate  variant="ghost" size="sm" class="gap-2 cursor-pointer">
 					<Library class="h-4 w-4" />
 					<span class="hidden sm:block">All Resources</span>
 				</Button>

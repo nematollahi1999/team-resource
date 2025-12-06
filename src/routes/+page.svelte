@@ -6,14 +6,14 @@
 	import { Input } from '$lib/components/ui/input';
 	import * as Pagination from '$lib/components/ui/pagination';
 	import * as Select from '$lib/components/ui/select';
-	import { Search, Lock  } from 'lucide-svelte';
+	import { Search, Lock } from 'lucide-svelte';
 	import ResourceCard from '$lib/components/custom/card/ResourceCard.svelte';
-	
-	let { data } = $props();
+	import type { ResourceType } from '$lib/types';
+	import { untrack } from 'svelte';
 
+	let { data } = $props();
 	let user = $derived(page.data.user);
 
-	// --- CONSTANTS ---
 	const sortOptions = [
 		{ value: '-created', label: 'Newest' },
 		{ value: '+created', label: 'Oldest' },
@@ -26,28 +26,38 @@
 	let searchTerm = $state(page.url.searchParams.get('search') || '');
 	let timer: ReturnType<typeof setTimeout>;
 
-	// 1. Debounce Logic
+	// 1. SYNC URL -> STATE (Fixes the lag)
 	$effect(() => {
-		const currentUrlSearch = page.url.searchParams.get('search') || '';
+		const urlSearch = page.url.searchParams.get('search') || '';
 		
-		if (searchTerm !== currentUrlSearch) {
-			clearTimeout(timer);
-			timer = setTimeout(() => {
-				updateQuery('search', searchTerm);
-			}, 300);
+		// FIX: Wrap searchTerm in untrack().
+		// This ensures the effect ONLY runs when 'page.url' changes, 
+		// NOT when you are just typing in the input.
+		if (untrack(() => searchTerm) !== urlSearch) {
+			searchTerm = urlSearch;
 		}
 	});
 
-	// 2. Type Select Logic
+	// 2. SYNC STATE -> URL (Typing Handler)
+	function handleSearchInput(e: Event) {
+		const val = (e.target as HTMLInputElement).value;
+		searchTerm = val; // Update local UI immediately for responsiveness
+
+		clearTimeout(timer);
+		timer = setTimeout(() => {
+			updateQuery('search', val);
+		}, 300);
+	}
+
+	// 3. Derived Values
 	let currentTypeParam = $derived(page.url.searchParams.get('type') || 'all');
 	
 	let typeTriggerLabel = $derived.by(() => {
 		if (currentTypeParam === 'all') return 'All Types';
-		const found = data.types?.find((t) => t.resource_type === currentTypeParam);
+		const found = data.types?.find((t: ResourceType) => t.resource_type === currentTypeParam);
 		return found ? found.resource_type : 'All Types';
 	});
 
-	// 3. Sort Select Logic
 	let currentSortParam = $derived(page.url.searchParams.get('sort') || '-created');
 
 	let sortTriggerLabel = $derived.by(() => {
@@ -62,7 +72,6 @@
 		if (val && val !== 'all') url.searchParams.set(key, val);
 		else url.searchParams.delete(key);
 
-		// Always reset to page 1 when changing filters/sort, unless we are pagination
 		if (key !== 'page') {
 			url.searchParams.set('page', '1');
 		}
@@ -71,7 +80,7 @@
 	}
 
 	function clearFilters() {
-		searchTerm = '';
+		searchTerm = ''; // Optional visual clear immediate feedback
 		const url = new URL(page.url);
 		url.searchParams.delete('search');
 		url.searchParams.delete('type');
@@ -87,7 +96,13 @@
 		<!-- Search -->
 		<div class="relative w-full md:flex-1">
 			<Search class="text-muted-foreground absolute left-2.5 top-2.5 h-4 w-4" />
-			<Input placeholder="Search titles, tags..." class="pl-8" bind:value={searchTerm} />
+			
+			<Input 
+				placeholder="Search titles, tags..." 
+				class="pl-8" 
+				value={searchTerm} 
+				oninput={handleSearchInput}
+			/>
 		</div>
 
 		<div class="flex flex-col gap-2 md:flex-row w-full md:w-auto">
@@ -156,7 +171,6 @@
 			<!-- EMPTY STATE -->
 			<div class="col-span-1 rounded-lg border border-dashed border-slate-300 bg-slate-50/50 py-20 text-center md:col-span-3">
 				
-				<!-- NEW: Check if user is logged in -->
 				{#if !user}
 					<div class="flex flex-col items-center justify-center gap-2">
 						<div class="rounded-full bg-slate-100 p-3 mb-2">
@@ -170,7 +184,6 @@
 					</div>
 				
 				{:else}
-					<!-- User IS logged in, but search/filter returned no results -->
 					<p class="text-lg font-medium text-slate-600">No resources found</p>
 					<p class="mt-1 text-sm text-slate-500">Try adjusting your search or filters</p>
 					<Button variant="link" onclick={clearFilters} class="mt-2 text-blue-600 cursor-pointer">
